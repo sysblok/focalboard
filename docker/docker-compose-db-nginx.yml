@@ -65,8 +65,8 @@ services:
       - pgdata:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: boards
-      POSTGRES_USER: boardsuser
-      POSTGRES_PASSWORD: boardsuser-password
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_USER}
 
 volumes:
   fbdata:
