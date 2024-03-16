@@ -11,7 +11,8 @@ services:
     expose:
       - 8000
     environment:
-      - VIRTUAL_HOST=localhost
+      - VIRTUAL_HOST=${FOCALBOARD_HOST}
+      - LETSENCRYPT_HOST=${FOCALBOARD_HOST}
       - VIRTUAL_PORT=8000
       - VIRTUAL_PROTO=http
     volumes:
@@ -27,10 +28,33 @@ services:
     container_name: focalboard-proxy
     restart: always
     ports:
-      - 80:80
+      - "80:80"
+      - "443:443"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
+      - "html:/usr/share/nginx/html"
+      - "dhparam:/etc/nginx/dhparam"
+      - "vhost:/etc/nginx/vhost.d"
+      - "certs:/etc/nginx/certs"
     networks:
+      - proxy
+
+  letsencrypt:
+    image: "jrcs/letsencrypt-nginx-proxy-companion:latest"
+    container_name: "letsencrypt-helper"
+    volumes:
+      - "html:/usr/share/nginx/html"
+      - "dhparam:/etc/nginx/dhparam"
+      - "vhost:/etc/nginx/vhost.d"
+      - "certs:/etc/nginx/certs"
+      - "/run/docker.sock:/var/run/docker.sock:ro"
+    environment:
+      NGINX_PROXY_CONTAINER: "focalboard-proxy"
+      DEFAULT_EMAIL: ${LETSENCRYPT_EMAIL}
+    restart: "always"
+    depends_on:
+      - "proxy"
+    networks: 
       - proxy
 
   focalboard-db:
@@ -47,6 +71,10 @@ services:
 volumes:
   fbdata:
   pgdata:
+  certs:
+  html:
+  vhost:
+  dhparam:
 
 networks:
   proxy:
