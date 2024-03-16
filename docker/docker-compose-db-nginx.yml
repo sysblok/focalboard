@@ -32,6 +32,7 @@ services:
       - "443:443"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./client_max_body_size.conf:/etc/nginx/conf.d/client_max_body_size.conf:ro
       - "html:/usr/share/nginx/html"
       - "dhparam:/etc/nginx/dhparam"
       - "vhost:/etc/nginx/vhost.d"
