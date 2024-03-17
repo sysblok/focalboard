@@ -74,7 +74,11 @@ function convert(input: Trello): [Board[], Block[]] {
     // Convert lists (columns) to a Select property
     const optionIdMap = new Map<string, string>()
     const options: IPropertyOption[] = []
-    input.lists.forEach(list => {
+    input.lists.filter(
+        // don't import archived lists, they have misaligned positions
+        // TODO move into optional flag
+        (list) => list.closed == false
+    ).forEach(list => {
         const optionId = Utils.createGuid()
         optionIdMap.set(list.id, optionId)
         const color = optionColors[optionColorIndex % optionColors.length]
@@ -105,7 +109,11 @@ function convert(input: Trello): [Board[], Block[]] {
     blocks.push(view)
 
     // Cards
-    input.cards.forEach(card => {
+    input.cards.filter(
+        // don't import archived cards
+        // TODO move into optional flag
+        (card) => card.closed == false
+    ).forEach(card => {
         console.log(`Card: ${card.name}`)
 
         const outCard = createCard()
