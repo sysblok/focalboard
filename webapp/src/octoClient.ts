@@ -125,6 +125,18 @@ class OctoClient {
         return {code: response.status, json}
     }
 
+    async registerOrFetch(email: string, username: string, password: string, token?: string): Promise<{code: number, json: {error?: string, userId?: string}}> {
+        const path = '/api/v2/registerorfetch'
+        const body = JSON.stringify({email, username, password, token})
+        const response = await fetch(this.getBaseURL() + path, {
+            method: 'POST',
+            headers: this.headers(),
+            body,
+        })
+        const json = (await this.getJson(response, {})) as {error?: string, userId?: string}
+        return {code: response.status, json}
+    }
+
     async changePassword(userId: string, oldPassword: string, newPassword: string): Promise<{code: number, json: {error?: string}}> {
         const path = `/api/v2/users/${encodeURIComponent(userId)}/changepassword`
         const body = JSON.stringify({oldPassword, newPassword})

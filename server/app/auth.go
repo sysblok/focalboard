@@ -194,6 +194,58 @@ func (a *App) RegisterUser(username, email, password string) error {
 	return nil
 }
 
+
+// RegisterOrFetchUser creates a new user if the provided data is valid.
+func (a *App) RegisterOrFetchUser(username, email, password string) (string, error) {
+	var user *model.User
+	if username != "" {
+		var err error
+		user, err = a.store.GetUserByUsername(username)
+		if err != nil && !model.IsErrNotFound(err) {
+			return "", err
+		}
+		if user != nil {
+			return user.ID, errors.New("The username already exists")
+		}
+	}
+
+	if user == nil && email != "" {
+		var err error
+		user, err = a.store.GetUserByEmail(email)
+		if err != nil && !model.IsErrNotFound(err) {
+			return "", err
+		}
+		if user != nil {
+			return user.ID, errors.New("The email already exists")
+		}
+	}
+
+	// TODO: Move this into the config
+	passwordSettings := auth.PasswordSettings{
+		MinimumLength: 6,
+	}
+
+	err := auth.IsPasswordValid(password, passwordSettings)
+	if err != nil {
+		return "", errors.Wrap(err, "Invalid password")
+	}
+
+	user, err = a.store.CreateUser(&model.User{
+		ID:          utils.NewID(utils.IDTypeUser),
+		Username:    username,
+		Email:       email,
+		Password:    auth.HashPassword(password),
+		MfaSecret:   "",
+		AuthService: a.config.AuthMode,
+		AuthData:    "",
+	})
+	if err != nil {
+		return "", errors.Wrap(err, "Unable to create the new user")
+	}
+
+	return user.ID, nil
+}
+
 func (a *App) UpdateUserPassword(username, password string) error {
 	err := a.store.UpdateUserPassword(username, auth.HashPassword(password))
 	if err != nil {

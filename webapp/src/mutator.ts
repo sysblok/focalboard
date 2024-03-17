@@ -1200,15 +1200,16 @@ class Mutator {
         const fileContents = await new Response(file.stream()).text();
         const input = JSON.parse(fileContents) as Trello
 
+        const memberIdMap = new Map<string, string>();
         input.members.forEach(async (member) => {
             const email = member.username + "@sysblok.ru";
-            const response = await octoClient.register(email, member.username, "password", signupToken)
-            if (response.code === 200) {
-                console.log(`registered ${member.username}`)
+            const response = await octoClient.registerOrFetch(email, member.username, "password", signupToken)
+            if (response.code === 200 && response.json.userId) {
+                memberIdMap.set(member.id, response.json.userId)
             } else if (response.code === 401) {
-                console.log('Invalid registration link, please contact your administrator')
+                Utils.assertFailure(`ERROR: invalid token, can't import members ${response.json.error}`)
             } else {
-                console.log(`${response.json?.error}`)
+                Utils.assertFailure(`ERROR: ${response.json.error}`)
             }
         })
 
