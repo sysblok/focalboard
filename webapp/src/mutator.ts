@@ -1213,13 +1213,12 @@ class Mutator {
             }
         })
 
-        // const [boards, blocks] = convertTrello(input)
-        // const outputData = ArchiveUtils.buildBlockArchive(boards, blocks)
+        const [boards, blocks] = convertTrello(input, memberIdMap)
+        const outputData = ArchiveUtils.buildBlockArchive(boards, blocks)
         
-        // const convertedFile = new File([outputData], "trello.boardarchive");
+        const convertedFile = new File([outputData], "trello.boardarchive");
         
-        // return this.importFullArchive(convertedFile)
-        return this.importFullArchive(file)
+        return this.importFullArchive(convertedFile)
     }
 
     get canUndo(): boolean {

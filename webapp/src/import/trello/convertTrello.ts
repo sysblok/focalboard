@@ -27,7 +27,7 @@ const optionColors = [
 ]
 let optionColorIndex = 0
 
-export function convertTrello(input: Trello): [Board[], Block[]] {
+export function convertTrello(input: Trello, memberIdMap: Map<string, string>): [Board[], Block[]] {
     const boards: Board[] = []
     const blocks: Block[] = []
 
@@ -63,7 +63,13 @@ export function convertTrello(input: Trello): [Board[], Block[]] {
         type: 'select',
         options
     }
-    board.cardProperties = [cardProperty]
+    const memberProperty: IPropertyTemplate = {
+        id: Utils.createGuid(),
+        name: 'Assignee',
+        type: 'multiPerson',
+        options: []
+    }
+    board.cardProperties = [cardProperty, memberProperty]
     boards.push(board)
 
     // Board view
@@ -80,7 +86,7 @@ export function convertTrello(input: Trello): [Board[], Block[]] {
         // TODO move into optional flag
         (card) => card.closed == false
     ).forEach(card => {
-        console.log(`Card: ${card.name}`)
+        // console.log(`Card: ${card.name}`)
 
         const outCard = createCard()
         outCard.title = card.name
@@ -110,6 +116,22 @@ export function convertTrello(input: Trello): [Board[], Block[]] {
             blocks.push(text)
 
             outCard.fields.contentOrder = [text.id]
+        }
+
+        // Add assignees
+        if (card.idMembers && card.idMembers.length > 0) {
+            card.idMembers.forEach(idMember => {
+                let focalboardId = memberIdMap.get(idMember.toString())
+                if (focalboardId) {
+                    if (outCard.fields.properties[memberProperty.id]) {
+                        outCard.fields.properties[memberProperty.id] = [...outCard.fields.properties[memberProperty.id], focalboardId]
+                    } else {
+                        outCard.fields.properties[memberProperty.id] = [focalboardId]
+                    }
+                } else {
+                    console.warn(`Not found card member for: ${card.idList} for card: ${card.name}`)
+                }
+            })
         }
 
         // Add Checklists
