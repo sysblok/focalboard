@@ -11,7 +11,7 @@ import {Trello} from './trello'
 import {Utils} from './utils'
 
 // HACKHACK: To allow Utils.CreateGuid to work
-(global.window as any) = {}
+// (global.window as any) = {}
 
 const optionColors = [
     // 'propColorDefault',

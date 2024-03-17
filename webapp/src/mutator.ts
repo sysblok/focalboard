@@ -1202,11 +1202,9 @@ class Mutator {
         const [boards, blocks] = convertTrello(input)
         const outputData = ArchiveUtils.buildBlockArchive(boards, blocks)
         
-        // console.log(outputData)
-        // const convertedFile = new File([outputData], "trello.boardarchive");
-        // console.log(convertedFile)
+        const convertedFile = new File([outputData], "trello.boardarchive");
         
-        return this.importFullArchive(file)
+        return this.importFullArchive(convertedFile)
     }
 
     get canUndo(): boolean {
