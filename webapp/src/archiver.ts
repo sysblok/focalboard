@@ -53,8 +53,8 @@ class Archiver {
         }
     }
 
-    private static async importArchiveTrelloFromFile(file: File): Promise<void> {
-        const response = await mutator.importFullArchiveTrello(file)
+    private static async importArchiveTrelloFromFile(file: File, signupToken: string): Promise<void> {
+        const response = await mutator.importFullArchiveTrello(file, signupToken)
         if (response.status !== 200) {
             Utils.log('ERROR importing archive trello: ' + response.text())
         }
@@ -88,14 +88,14 @@ class Archiver {
         // TODO: Remove or reuse input
     }
 
-    static importFullArchiveTrello(onComplete?: () => void): void {
+    static importFullArchiveTrello(signupToken: string, onComplete?: () => void): void {
         const input = document.createElement('input')
         input.type = 'file'
         input.accept = '.json'
         input.onchange = async () => {
             const file = input.files && input.files[0]
             if (file) {
-                await Archiver.importArchiveTrelloFromFile(file)
+                await Archiver.importArchiveTrelloFromFile(file, signupToken)
             }
 
             onComplete?.()

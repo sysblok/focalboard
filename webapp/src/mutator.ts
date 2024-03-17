@@ -1196,15 +1196,29 @@ class Mutator {
         return octoClient.importFullArchive(file)
     }
 
-    async importFullArchiveTrello(file: File): Promise<Response> {
+    async importFullArchiveTrello(file: File, signupToken: string): Promise<Response> {
         const fileContents = await new Response(file.stream()).text();
         const input = JSON.parse(fileContents) as Trello
-        const [boards, blocks] = convertTrello(input)
-        const outputData = ArchiveUtils.buildBlockArchive(boards, blocks)
+
+        input.members.forEach(async (member) => {
+            const email = member.username + "@sysblok.ru";
+            const response = await octoClient.register(email, member.username, "password", signupToken)
+            if (response.code === 200) {
+                console.log(`registered ${member.username}`)
+            } else if (response.code === 401) {
+                console.log('Invalid registration link, please contact your administrator')
+            } else {
+                console.log(`${response.json?.error}`)
+            }
+        })
+
+        // const [boards, blocks] = convertTrello(input)
+        // const outputData = ArchiveUtils.buildBlockArchive(boards, blocks)
         
-        const convertedFile = new File([outputData], "trello.boardarchive");
+        // const convertedFile = new File([outputData], "trello.boardarchive");
         
-        return this.importFullArchive(convertedFile)
+        // return this.importFullArchive(convertedFile)
+        return this.importFullArchive(file)
     }
 
     get canUndo(): boolean {
