@@ -20,6 +20,9 @@ import {Utils, IDType} from './utils'
 import {UserSettings} from './userSettings'
 import TelemetryClient, {TelemetryCategory, TelemetryActions} from './telemetry/telemetryClient'
 import {Category} from './store/sidebar'
+import {Trello} from './import/trello/trello'
+import {convertTrello} from './import/trello/convertTrello'
+import {ArchiveUtils} from './import/archiveutils'
 
 /* eslint-disable max-lines */
 import {UserConfigPatch, UserPreference} from './user'
@@ -1191,6 +1194,19 @@ class Mutator {
     // Not a mutator, but convenient to put here since Mutator wraps OctoClient
     async importFullArchive(file: File): Promise<Response> {
         return octoClient.importFullArchive(file)
+    }
+
+    async importFullArchiveTrello(file: File): Promise<Response> {
+        const fileContents = await new Response(file.stream()).text();
+        const input = JSON.parse(fileContents) as Trello
+        const [boards, blocks] = convertTrello(input)
+        const outputData = ArchiveUtils.buildBlockArchive(boards, blocks)
+        
+        // console.log(outputData)
+        // const convertedFile = new File([outputData], "trello.boardarchive");
+        // console.log(convertedFile)
+        
+        return this.importFullArchive(file)
     }
 
     get canUndo(): boolean {

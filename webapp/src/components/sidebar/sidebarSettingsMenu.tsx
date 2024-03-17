@@ -98,6 +98,14 @@ const SidebarSettingsMenu = (props: Props) => {
                                 Archiver.importFullArchive()
                             }}
                         />
+                        <Menu.Text
+                            id='import_archive_trello'
+                            name={intl.formatMessage({id: 'Sidebar.import-archive-trello', defaultMessage: 'Import archive Trello'})}
+                            onClick={async () => {
+                                TelemetryClient.trackEvent(TelemetryCategory, TelemetryActions.ImportArchiveTrello)
+                                Archiver.importFullArchiveTrello()
+                            }}
+                        />
                         {
                             Constants.imports.map((i) => (
                                 <Menu.Text
