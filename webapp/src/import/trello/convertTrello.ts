@@ -9,6 +9,7 @@ import {createTextBlock} from '../../blocks/textBlock'
 import {createCheckboxBlock} from '../../blocks/checkboxBlock'
 import {Trello} from './trello'
 import {Utils} from './utils'
+import {createCommentBlock} from '../../blocks/commentBlock'
 
 // HACKHACK: To allow Utils.CreateGuid to work
 // (global.window as any) = {}
@@ -109,6 +110,7 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
     blocks.push(view)
 
     // Cards
+    const cardIdMap = new Map<string, string>()
     input.cards.filter(
         // don't import archived cards
         // TODO move into optional flag
@@ -117,6 +119,7 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
         // console.log(`Card: ${card.name}`)
 
         const outCard = createCard()
+        cardIdMap.set(card.id, outCard.id)
         outCard.title = card.name
         outCard.boardId = board.id
         outCard.parentId = board.id
@@ -204,6 +207,29 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
                     })
                 }
             })
+        }
+    })
+
+    input.actions.filter((action) => action.type == 'commentCard').forEach((action) => {
+        // Add comments
+        if (action.type == 'commentCard' && action.data.card) {
+            const cardId = cardIdMap.get(action.data.card.id)
+            const creatorId = memberIdMap.get(action.idMemberCreator)
+            const text = action.data.text
+            if (cardId && creatorId && text) {
+                const comment = createCommentBlock()
+                comment.parentId = cardId
+                comment.createdBy = creatorId
+                // dunno if we can update comments
+                comment.modifiedBy = comment.createdBy
+                comment.title = text
+                comment.createAt = Date.parse(action.date)
+                // dunno if we can update comments
+                comment.updateAt = comment.createAt
+                comment.deleteAt = 0
+                comment.boardId = board.id
+                blocks.push(comment)
+            }
         }
     })
 
