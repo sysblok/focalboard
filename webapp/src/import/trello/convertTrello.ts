@@ -128,9 +128,13 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
                 outCard.fields.properties[cardProperty.id] = optionId
             } else {
                 console.warn(`Invalid idList: ${card.idList} for card: ${card.name}`)
+                // don't import cards without list
+                return
             }
         } else {
             console.warn(`Missing idList for card: ${card.name}`)
+            // don't import cards without list
+            return
         }
 
         blocks.push(outCard)
