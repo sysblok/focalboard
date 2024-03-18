@@ -35,6 +35,7 @@ export const TelemetryActions = {
     ShareLinkPublicCopy: 'shareLinkPublic_copy',
     ShareLinkInternalCopy: 'shareLinkInternal_copy',
     ImportArchive: 'settings_importArchive',
+    ImportArchiveTrello: 'settings_importArchiveTrello',
     ImportTrello: 'settings_importTrello',
     ImportAsana: 'settings_importAsana',
     ImportNotion: 'settings_importNotion',

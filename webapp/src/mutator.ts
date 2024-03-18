@@ -7,7 +7,7 @@ import cloneDeep from 'lodash/cloneDeep'
 
 import {BlockIcons} from './blockIcons'
 import {Block, BlockPatch, createPatchesFromBlocks} from './blocks/block'
-import {Board, BoardMember, BoardsAndBlocks, IPropertyOption, IPropertyTemplate, PropertyTypeEnum, createBoard, createPatchesFromBoards, createPatchesFromBoardsAndBlocks, createCardPropertiesPatches} from './blocks/board'
+import {Board, BoardMember, BoardsAndBlocks, IPropertyOption, IPropertyTemplate, PropertyTypeEnum, MemberRole, createBoard, createPatchesFromBoards, createPatchesFromBoardsAndBlocks, createCardPropertiesPatches} from './blocks/board'
 import {BoardView, ISortOption, createBoardView, KanbanCalculationFields} from './blocks/boardView'
 import {Card, createCard} from './blocks/card'
 import {ContentBlock} from './blocks/contentBlock'
@@ -20,6 +20,9 @@ import {Utils, IDType} from './utils'
 import {UserSettings} from './userSettings'
 import TelemetryClient, {TelemetryCategory, TelemetryActions} from './telemetry/telemetryClient'
 import {Category} from './store/sidebar'
+import {Trello} from './import/trello/trello'
+import {convertTrello} from './import/trello/convertTrello'
+import {ArchiveUtils} from './import/archiveutils'
 
 /* eslint-disable max-lines */
 import {UserConfigPatch, UserPreference} from './user'
@@ -1191,6 +1194,49 @@ class Mutator {
     // Not a mutator, but convenient to put here since Mutator wraps OctoClient
     async importFullArchive(file: File): Promise<Response> {
         return octoClient.importFullArchive(file)
+    }
+
+    async importFullArchiveTrello(file: File, signupToken: string): Promise<Response> {
+        const fileContents = await new Response(file.stream()).text();
+        const input = JSON.parse(fileContents) as Trello
+
+        const memberIdMap = new Map<string, string>()
+        await Promise.all(input.members.map(async (member) => {
+            const email = member.username + "@sysblok.ru";
+            const response = await octoClient.registerOrFetch(email, member.username, "password", signupToken)
+            if (response.code === 200 && response.json.userId) {
+                memberIdMap.set(member.id, response.json.userId)
+            } else if (response.code === 401) {
+                Utils.assertFailure(`ERROR: invalid token, can't import members ${response.json.error}`)
+            } else {
+                Utils.assertFailure(`ERROR: ${response.json.error}`)
+            }
+        }))
+
+        const [boards, blocks] = convertTrello(input, memberIdMap)
+        const outputData = ArchiveUtils.buildBlockArchive(boards, blocks)
+        
+        const convertedFile = new File([outputData], "trello.boardarchive");
+        
+        const resp = await this.importFullArchive(convertedFile)
+        const respJson = await resp.json() as {boardId: string}
+        const boardId = respJson.boardId
+
+        // invite the users to the board
+        for (const focalboardMemberId of memberIdMap.values()) {
+            const minimumRole = MemberRole.Editor
+            const newMember = {
+                boardId,
+                userId: focalboardMemberId,
+                roles: minimumRole,
+                schemeEditor: minimumRole === MemberRole.Editor,
+                schemeCommenter: minimumRole === MemberRole.Editor || minimumRole === MemberRole.Commenter,
+                schemeViewer: minimumRole === MemberRole.Editor || minimumRole === MemberRole.Commenter || minimumRole === MemberRole.Viewer,
+            } as BoardMember
+            this.createBoardMember(newMember)
+        }
+
+        return resp
     }
 
     get canUndo(): boolean {

@@ -53,7 +53,7 @@ func (a *App) initializeTemplates() (bool, error) {
 		BlockModifier: fixTemplateBlock,
 		BoardModifier: fixTemplateBoard,
 	}
-	if err = a.ImportArchive(r, opt); err != nil {
+	if _, err = a.ImportArchive(r, opt); err != nil {
 		return false, fmt.Errorf("cannot initialize global templates for team %s: %w", model.GlobalTeamID, err)
 	}
 	return true, nil

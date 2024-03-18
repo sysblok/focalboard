@@ -164,16 +164,17 @@ func (a *API) handleArchiveImport(w http.ResponseWriter, r *http.Request) {
 		ModifiedBy: userID,
 	}
 
-	if err := a.app.ImportArchive(file, opt); err != nil {
+	board, errr := a.app.ImportArchive(file, opt)
+	if errr != nil {
 		a.logger.Debug("Error importing archive",
 			mlog.String("team_id", teamID),
-			mlog.Err(err),
+			mlog.Err(errr),
 		)
-		a.errorResponse(w, r, err)
+		a.errorResponse(w, r, errr)
 		return
 	}
 
-	jsonStringResponse(w, http.StatusOK, "{}")
+	jsonStringResponse(w, http.StatusOK, "{\"boardId\": \"" + board + "\"}")
 	auditRec.Success()
 }
 
