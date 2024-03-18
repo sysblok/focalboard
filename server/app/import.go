@@ -35,15 +35,15 @@ var (
 //
 // Archives are ZIP files containing a `version.json` file and zero or more
 // directories, each containing a `board.jsonl` and zero or more image files.
-func (a *App) ImportArchive(r io.Reader, opt model.ImportArchiveOptions) error {
+func (a *App) ImportArchive(r io.Reader, opt model.ImportArchiveOptions) (string, error) {
 	// peek at the first bytes to see if this is a legacy archive format
 	br := bufio.NewReader(r)
 	peek, err := br.Peek(len(legacyFileBegin))
 	if err == nil && string(peek) == legacyFileBegin {
 		a.logger.Debug("importing legacy archive")
-		_, errImport := a.ImportBoardJSONL(br, opt)
+		board, errImport := a.ImportBoardJSONL(br, opt)
 
-		return errImport
+		return board.ID, errImport
 	}
 
 	zr := zipstream.NewReader(br)
@@ -57,9 +57,9 @@ func (a *App) ImportArchive(r io.Reader, opt model.ImportArchiveOptions) error {
 			if errors.Is(err, io.EOF) {
 				a.fixImagesAttachments(boardMap, fileMap, opt.TeamID, opt.ModifiedBy)
 				a.logger.Debug("import archive - done", mlog.Int("boards_imported", len(boardMap)))
-				return nil
+				return "", nil
 			}
-			return err
+			return "", err
 		}
 
 		dir, filename := filepath.Split(hdr.Name)
@@ -69,15 +69,15 @@ func (a *App) ImportArchive(r io.Reader, opt model.ImportArchiveOptions) error {
 		case "version.json":
 			ver, errVer := parseVersionFile(zr)
 			if errVer != nil {
-				return errVer
+				return "", errVer
 			}
 			if ver != archiveVersion {
-				return model.NewErrUnsupportedArchiveVersion(ver, archiveVersion)
+				return "", model.NewErrUnsupportedArchiveVersion(ver, archiveVersion)
 			}
 		case "board.jsonl":
 			board, err := a.ImportBoardJSONL(zr, opt)
 			if err != nil {
-				return fmt.Errorf("cannot import board %s: %w", dir, err)
+				return "", fmt.Errorf("cannot import board %s: %w", dir, err)
 			}
 			boardMap[dir] = board
 		default:
@@ -92,7 +92,7 @@ func (a *App) ImportArchive(r io.Reader, opt model.ImportArchiveOptions) error {
 			}
 			newFileName, err := a.SaveFile(zr, opt.TeamID, board.ID, filename, board.IsTemplate)
 			if err != nil {
-				return fmt.Errorf("cannot import file %s for board %s: %w", filename, dir, err)
+				return "", fmt.Errorf("cannot import file %s for board %s: %w", filename, dir, err)
 			}
 			fileMap[filename] = newFileName
 
