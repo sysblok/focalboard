@@ -1200,8 +1200,8 @@ class Mutator {
         const fileContents = await new Response(file.stream()).text();
         const input = JSON.parse(fileContents) as Trello
 
-        const memberIdMap = new Map<string, string>();
-        input.members.forEach(async (member) => {
+        const memberIdMap = new Map<string, string>()
+        await Promise.all(input.members.map(async (member) => {
             const email = member.username + "@sysblok.ru";
             const response = await octoClient.registerOrFetch(email, member.username, "password", signupToken)
             if (response.code === 200 && response.json.userId) {
@@ -1211,7 +1211,7 @@ class Mutator {
             } else {
                 Utils.assertFailure(`ERROR: ${response.json.error}`)
             }
-        })
+        }))
 
         const [boards, blocks] = convertTrello(input, memberIdMap)
         const outputData = ArchiveUtils.buildBlockArchive(boards, blocks)

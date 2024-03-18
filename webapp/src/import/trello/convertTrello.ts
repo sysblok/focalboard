@@ -121,7 +121,7 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
         // Add assignees
         if (card.idMembers && card.idMembers.length > 0) {
             card.idMembers.forEach(idMember => {
-                let focalboardId = memberIdMap.get(idMember.toString())
+                const focalboardId = memberIdMap.get(idMember.toString())
                 if (focalboardId) {
                     if (outCard.fields.properties[memberProperty.id]) {
                         outCard.fields.properties[memberProperty.id] = [...outCard.fields.properties[memberProperty.id], focalboardId]
@@ -129,7 +129,7 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
                         outCard.fields.properties[memberProperty.id] = [focalboardId]
                     }
                 } else {
-                    console.warn(`Not found card member for: ${card.idList} for card: ${card.name}`)
+                    console.warn(`Not found card member for: ${idMember} for card: ${card.name}`)
                 }
             })
         }
