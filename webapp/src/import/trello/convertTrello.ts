@@ -57,11 +57,33 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
         options.push(option)
     })
 
+    const optionLabelIdMap = new Map<string, string>()
+    const optionsLabel: IPropertyOption[] = []
+    input.labels.forEach(label => {
+        console.log(`Label: ${label.name}`)
+        const optionId = Utils.createGuid()
+        optionLabelIdMap.set(label.id, optionId)
+        const color = optionColors[optionColorIndex % optionColors.length]
+        optionColorIndex += 1
+        const option: IPropertyOption = {
+            id: optionId,
+            value: label.name,
+            color,
+        }
+        optionsLabel.push(option)
+    })
+
     const cardProperty: IPropertyTemplate = {
         id: Utils.createGuid(),
         name: 'List',
         type: 'select',
         options
+    }
+    const labelProperty: IPropertyTemplate = {
+        id: Utils.createGuid(),
+        name: 'Label',
+        type: 'select',
+        options: optionsLabel
     }
     const memberProperty: IPropertyTemplate = {
         id: Utils.createGuid(),
@@ -75,7 +97,7 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
         type: 'date',
         options: []
     }
-    board.cardProperties = [cardProperty, memberProperty, dueProperty]
+    board.cardProperties = [cardProperty, memberProperty, dueProperty, labelProperty]
     boards.push(board)
 
     // Board view
@@ -122,6 +144,18 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
             blocks.push(text)
 
             outCard.fields.contentOrder = [text.id]
+        }
+
+        // Add labels
+        if (card.labels) {
+            card.labels.forEach(label => {
+                const optionId = optionLabelIdMap.get(label.id)
+                if (optionId) {
+                    outCard.fields.properties[labelProperty.id] = optionId
+                } else {
+                    console.warn(`not found label for ${label.id}`)
+                }
+            })
         }
 
         // Add due date
