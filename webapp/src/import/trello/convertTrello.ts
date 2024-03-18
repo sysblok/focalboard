@@ -69,7 +69,13 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
         type: 'multiPerson',
         options: []
     }
-    board.cardProperties = [cardProperty, memberProperty]
+    const dueProperty: IPropertyTemplate = {
+        id: Utils.createGuid(),
+        name: 'Due',
+        type: 'date',
+        options: []
+    }
+    board.cardProperties = [cardProperty, memberProperty, dueProperty]
     boards.push(board)
 
     // Board view
@@ -116,6 +122,11 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
             blocks.push(text)
 
             outCard.fields.contentOrder = [text.id]
+        }
+
+        // Add due date
+        if (card.due) {
+            outCard.fields.properties[dueProperty.id] = `{\"to\":${Date.parse(card.due)}}`
         }
 
         // Add assignees
