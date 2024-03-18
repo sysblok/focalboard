@@ -1196,16 +1196,32 @@ class Mutator {
         return octoClient.importFullArchive(file)
     }
 
-    async importFullArchiveTrello(file: File, signupToken: string): Promise<Response> {
+    async importFullArchiveTrello(file: File, signupToken: string): Promise<Record<string, string>[]> {
         const fileContents = await new Response(file.stream()).text();
         const input = JSON.parse(fileContents) as Trello
 
         const memberIdMap = new Map<string, string>()
+        const newUserInfo: Record<string, string>[] = []
         await Promise.all(input.members.map(async (member) => {
-            const email = member.username + "@sysblok.ru";
-            const response = await octoClient.registerOrFetch(email, member.username, "password", signupToken)
+            const email = member.username + "@sysblok.ru"
+            const password = Math.random().toString(36).slice(2)
+            const response = await octoClient.registerOrFetch(email, member.username, password, signupToken)
             if (response.code === 200 && response.json.userId) {
                 memberIdMap.set(member.id, response.json.userId)
+                if (response.json.isNew) {
+                    console.log(`new user ${email}`)
+                    newUserInfo.push({
+                        trelloId: member.id,
+                        trelloUsername: member.username,
+                        trelloFullName: member.fullName,
+                        focalboardId: response.json.userId,
+                        focalboardEmail: email,
+                        focalboardUsername: member.username,
+                        focalboardPassword: password
+                    })
+                } else {
+                    console.log(`old user ${email}`)
+                }
             } else if (response.code === 401) {
                 Utils.assertFailure(`ERROR: invalid token, can't import members ${response.json.error}`)
             } else {
@@ -1236,7 +1252,8 @@ class Mutator {
             this.createBoardMember(newMember)
         }
 
-        return resp
+        // returning new user info to be downloaded
+        return newUserInfo
     }
 
     get canUndo(): boolean {

@@ -125,7 +125,7 @@ class OctoClient {
         return {code: response.status, json}
     }
 
-    async registerOrFetch(email: string, username: string, password: string, token?: string): Promise<{code: number, json: {error?: string, userId?: string}}> {
+    async registerOrFetch(email: string, username: string, password: string, token?: string): Promise<{code: number, json: {error?: string, userId?: string, isNew?: boolean}}> {
         const path = '/api/v2/registerorfetch'
         const body = JSON.stringify({email, username, password, token})
         const response = await fetch(this.getBaseURL() + path, {
@@ -133,7 +133,7 @@ class OctoClient {
             headers: this.headers(),
             body,
         })
-        const json = (await this.getJson(response, {})) as {error?: string, userId?: string}
+        const json = (await this.getJson(response, {})) as {error?: string, userId?: string, isNew?: boolean}
         return {code: response.status, json}
     }
 

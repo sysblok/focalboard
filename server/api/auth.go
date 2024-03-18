@@ -335,7 +335,15 @@ func (a *API) handleRegisterOrFetch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonStringResponse(w, http.StatusOK, "{\"userId\": \"" + userId + "\"}")
+	if err != nil {
+		// means the user was already there
+		// TODO alexeyqu improve semantics here
+		jsonStringResponse(w, http.StatusOK, "{\"userId\": \"" + userId + "\", \"isNew\": false}")
+	} else {
+		// means we've created a new one
+		jsonStringResponse(w, http.StatusOK, "{\"userId\": \"" + userId + "\", \"isNew\": true}")
+	}
+
 	auditRec.Success()
 }
 

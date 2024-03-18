@@ -54,9 +54,23 @@ class Archiver {
     }
 
     private static async importArchiveTrelloFromFile(file: File, signupToken: string): Promise<void> {
-        const response = await mutator.importFullArchiveTrello(file, signupToken)
-        if (response.status !== 200) {
-            Utils.log('ERROR importing archive trello: ' + response.text())
+        const newUserInfo = await mutator.importFullArchiveTrello(file, signupToken)
+        const link = document.createElement('a')
+        link.style.display = 'none'
+
+        const date = new Date()
+        const filename = `focalboard-new-users-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}.json`
+
+        const blob = new Blob([JSON.stringify(newUserInfo, null, 2)], {type: 'application/json'})
+        link.href = URL.createObjectURL(blob)
+        link.download = filename
+        document.body.appendChild(link)		// FireFox support
+
+        link.click()
+
+        // TODO: Review if this is needed in the future, this is to fix the problem with linux webview links
+        if (window.openInNewBrowser) {
+            window.openInNewBrowser(link.href)
         }
     }
 
