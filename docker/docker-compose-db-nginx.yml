@@ -37,11 +37,12 @@ services:
       - "dhparam:/etc/nginx/dhparam"
       - "vhost:/etc/nginx/vhost.d"
       - "certs:/etc/nginx/certs"
+      - "letsencrypt-acme:/etc/acme.sh"
     networks:
       - proxy
 
   letsencrypt:
-    image: "jrcs/letsencrypt-nginx-proxy-companion:latest"
+    image: "nginxproxy/acme-companion:latest"
     container_name: "letsencrypt-helper"
     volumes:
       - "html:/usr/share/nginx/html"
@@ -49,6 +50,7 @@ services:
       - "vhost:/etc/nginx/vhost.d"
       - "certs:/etc/nginx/certs"
       - "/run/docker.sock:/var/run/docker.sock:ro"
+      - "letsencrypt-acme:/etc/acme.sh"
     environment:
       NGINX_PROXY_CONTAINER: "focalboard-proxy"
       DEFAULT_EMAIL: ${LETSENCRYPT_EMAIL}
@@ -76,6 +78,7 @@ volumes:
   html:
   vhost:
   dhparam:
+  letsencrypt-acme:
 
 networks:
   proxy:
