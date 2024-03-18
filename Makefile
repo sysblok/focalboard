@@ -64,6 +64,7 @@ server-linux: ## Build server for Linux.
 server-docker: ## Build server for Docker Architectures.
 	mkdir -p bin/docker
 	$(eval LDFLAGS += -X "github.com/mattermost/focalboard/server/model.Edition=linux")
+	cd server; go mod download
 	cd server; env GOOS=$(os) GOARCH=$(arch) go build -ldflags '$(LDFLAGS)' -tags '$(BUILD_TAGS)' -o ../bin/docker/focalboard-server ./main
 
 server-win: ## Build server for Windows.
