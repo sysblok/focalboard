@@ -7,7 +7,7 @@ import cloneDeep from 'lodash/cloneDeep'
 
 import {BlockIcons} from './blockIcons'
 import {Block, BlockPatch, createPatchesFromBlocks} from './blocks/block'
-import {Board, BoardMember, BoardsAndBlocks, IPropertyOption, IPropertyTemplate, PropertyTypeEnum, createBoard, createPatchesFromBoards, createPatchesFromBoardsAndBlocks, createCardPropertiesPatches} from './blocks/board'
+import {Board, BoardMember, BoardsAndBlocks, IPropertyOption, IPropertyTemplate, PropertyTypeEnum, MemberRole, createBoard, createPatchesFromBoards, createPatchesFromBoardsAndBlocks, createCardPropertiesPatches} from './blocks/board'
 import {BoardView, ISortOption, createBoardView, KanbanCalculationFields} from './blocks/boardView'
 import {Card, createCard} from './blocks/card'
 import {ContentBlock} from './blocks/contentBlock'
@@ -1218,7 +1218,25 @@ class Mutator {
         
         const convertedFile = new File([outputData], "trello.boardarchive");
         
-        return this.importFullArchive(convertedFile)
+        const resp = await this.importFullArchive(convertedFile)
+        const respJson = await resp.json() as {boardId: string}
+        const boardId = respJson.boardId
+
+        // invite the users to the board
+        for (const focalboardMemberId of memberIdMap.values()) {
+            const minimumRole = MemberRole.Editor
+            const newMember = {
+                boardId,
+                userId: focalboardMemberId,
+                roles: minimumRole,
+                schemeEditor: minimumRole === MemberRole.Editor,
+                schemeCommenter: minimumRole === MemberRole.Editor || minimumRole === MemberRole.Commenter,
+                schemeViewer: minimumRole === MemberRole.Editor || minimumRole === MemberRole.Commenter || minimumRole === MemberRole.Viewer,
+            } as BoardMember
+            this.createBoardMember(newMember)
+        }
+
+        return resp
     }
 
     get canUndo(): boolean {
