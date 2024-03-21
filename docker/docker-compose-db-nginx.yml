@@ -66,6 +66,9 @@ services:
     restart: always
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - type: bind
+        source: /backups
+        target: /backups
     environment:
       POSTGRES_DB: boards
       POSTGRES_USER: ${POSTGRES_USER}
