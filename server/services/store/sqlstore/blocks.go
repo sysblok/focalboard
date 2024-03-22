@@ -243,7 +243,9 @@ func (s *SQLStore) insertBlock(db sq.BaseRunner, block *model.Block, userID stri
 	}
 
 	block.UpdateAt = utils.GetMillis()
+	block.CreateAt = utils.GetMillis()
 	block.ModifiedBy = userID
+	block.CreatedBy = userID
 
 	insertQuery := s.getQueryBuilder(db).Insert("").
 		Columns(
@@ -271,9 +273,9 @@ func (s *SQLStore) insertBlock(db sq.BaseRunner, block *model.Block, userID stri
 		"title":                 block.Title,
 		"fields":                fieldsJSON,
 		"delete_at":             block.DeleteAt,
-		"created_by":            userID,
+		"created_by":            block.CreatedBy,
 		"modified_by":           block.ModifiedBy,
-		"create_at":             utils.GetMillis(),
+		"create_at":             block.CreateAt,
 		"update_at":             block.UpdateAt,
 		"board_id":              block.BoardID,
 	}
@@ -298,7 +300,6 @@ func (s *SQLStore) insertBlock(db sq.BaseRunner, block *model.Block, userID stri
 			return err
 		}
 	} else {
-		block.CreatedBy = userID
 		query := insertQuery.SetMap(insertQueryValues).Into(s.tablePrefix + "blocks")
 		if _, err := query.Exec(); err != nil {
 			return err
