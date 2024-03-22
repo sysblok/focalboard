@@ -133,3 +133,61 @@ func isValidPassword(password string) error {
 	}
 	return nil
 }
+
+// ChangeEmailRequest is a user email change request
+// swagger:model
+type ChangeEmailRequest struct {
+	// Password
+	// required: true
+	Password string `json:"password"`
+
+	// New email
+	// required: true
+	NewEmail string `json:"newEmail"`
+}
+
+// IsValid validates a password change request.
+func (rd *ChangeEmailRequest) IsValid() error {
+	if strings.TrimSpace(rd.Password) == "" {
+		return NewErrAuthParam("password is required")
+	}
+	if strings.TrimSpace(rd.NewEmail) == "" {
+		return NewErrAuthParam("new email is required")
+	}
+	return isValidEmail(rd.NewEmail)
+}
+
+func isValidEmail(email string) error {
+	if !auth.IsEmailValid(email) {
+		return NewErrAuthParam("invalid email format")
+	}
+	return nil
+}
+
+// ChangeUsernameRequest is a username change request
+// swagger:model
+type ChangeUsernameRequest struct {
+	// Password
+	// required: true
+	Password string `json:"password"`
+
+	// New username
+	// required: true
+	NewUsername string `json:"newUsername"`
+}
+
+// IsValid validates a password change request.
+func (rd *ChangeUsernameRequest) IsValid() error {
+	if strings.TrimSpace(rd.Password) == "" {
+		return NewErrAuthParam("password is required")
+	}
+	if strings.TrimSpace(rd.NewUsername) == "" {
+		return NewErrAuthParam("new username is required")
+	}
+	return isValidUsername(rd.NewUsername)
+}
+
+func isValidUsername(username string) error {
+	// TODO: reconsider, always valid
+	return nil
+}

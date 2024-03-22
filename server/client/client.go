@@ -668,6 +668,34 @@ func (c *Client) UserChangePassword(id string, data *model.ChangePasswordRequest
 	return true, BuildResponse(r)
 }
 
+func (c *Client) GetUserChangeEmailRoute(id string) string {
+	return fmt.Sprintf("/users/%s/changeemail", id)
+}
+
+func (c *Client) UserChangeEmail(id string, data *model.ChangeEmailRequest) (bool, *Response) {
+	r, err := c.DoAPIPost(c.GetUserChangeEmailRoute(id), toJSON(&data))
+	if err != nil {
+		return false, BuildErrorResponse(r, err)
+	}
+	defer closeBody(r)
+
+	return true, BuildResponse(r)
+}
+
+func (c *Client) GetUserChangeUsernameRoute(id string) string {
+	return fmt.Sprintf("/users/%s/changeusername", id)
+}
+
+func (c *Client) UserChangeUsername(id string, data *model.ChangeUsernameRequest) (bool, *Response) {
+	r, err := c.DoAPIPost(c.GetUserChangeUsernameRoute(id), toJSON(&data))
+	if err != nil {
+		return false, BuildErrorResponse(r, err)
+	}
+	defer closeBody(r)
+
+	return true, BuildResponse(r)
+}
+
 func (c *Client) CreateBoard(board *model.Board) (*model.Board, *Response) {
 	r, err := c.DoAPIPost(c.GetBoardsRoute(), toJSON(board))
 	if err != nil {

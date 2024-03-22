@@ -214,6 +214,56 @@ func (s *SQLStore) updateUserPasswordByID(db sq.BaseRunner, userID, password str
 	return nil
 }
 
+func (s *SQLStore) updateUserEmailByID(db sq.BaseRunner, userID, email string) error {
+	now := utils.GetMillis()
+
+	query := s.getQueryBuilder(db).Update(s.tablePrefix+"users").
+		Set("email", email).
+		Set("update_at", now).
+		Where(sq.Eq{"id": userID})
+
+	result, err := query.Exec()
+	if err != nil {
+		return err
+	}
+
+	rowCount, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowCount < 1 {
+		return UserNotFoundError{userID}
+	}
+
+	return nil
+}
+
+func (s *SQLStore) updateUserUsernameByID(db sq.BaseRunner, userID, username string) error {
+	now := utils.GetMillis()
+
+	query := s.getQueryBuilder(db).Update(s.tablePrefix+"users").
+		Set("username", username).
+		Set("update_at", now).
+		Where(sq.Eq{"id": userID})
+
+	result, err := query.Exec()
+	if err != nil {
+		return err
+	}
+
+	rowCount, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowCount < 1 {
+		return UserNotFoundError{userID}
+	}
+
+	return nil
+}
+
 func (s *SQLStore) getUsersByTeam(db sq.BaseRunner, _ string, _ string, _, _ bool) ([]*model.User, error) {
 	users, err := s.getUsersByCondition(db, nil, 0)
 	if model.IsErrNotFound(err) {

@@ -1196,14 +1196,14 @@ class Mutator {
         return octoClient.importFullArchive(file)
     }
 
-    async importFullArchiveTrello(file: File, signupToken: string): Promise<Record<string, string>[]> {
-        const fileContents = await new Response(file.stream()).text();
+    async importFullArchiveTrello(file: File, signupToken: string): Promise<Array<Record<string, string>>> {
+        const fileContents = await new Response(file.stream()).text()
         const input = JSON.parse(fileContents) as Trello
 
         const memberIdMap = new Map<string, string>()
-        const newUserInfo: Record<string, string>[] = []
+        const newUserInfo: Array<Record<string, string>> = []
         await Promise.all(input.members.map(async (member) => {
-            const email = member.username + "@sysblok.ru"
+            const email = member.username + '@sysblok.ru'
             const password = Math.random().toString(36).slice(2)
             const response = await octoClient.registerOrFetch(email, member.username, password, signupToken)
             if (response.code === 200 && response.json.userId) {
@@ -1217,7 +1217,7 @@ class Mutator {
                         focalboardId: response.json.userId,
                         focalboardEmail: email,
                         focalboardUsername: member.username,
-                        focalboardPassword: password
+                        focalboardPassword: password,
                     })
                 } else {
                     console.log(`old user ${email}`)
@@ -1231,9 +1231,9 @@ class Mutator {
 
         const [boards, blocks] = convertTrello(input, memberIdMap)
         const outputData = ArchiveUtils.buildBlockArchive(boards, blocks)
-        
-        const convertedFile = new File([outputData], "trello.boardarchive");
-        
+
+        const convertedFile = new File([outputData], 'trello.boardarchive')
+
         const resp = await this.importFullArchive(convertedFile)
         const respJson = await resp.json() as {boardId: string}
         const boardId = respJson.boardId
