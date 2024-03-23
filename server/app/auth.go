@@ -281,3 +281,57 @@ func (a *App) ChangePassword(userID, oldPassword, newPassword string) error {
 
 	return nil
 }
+
+func (a *App) ChangeEmail(userID, oldPassword, newEmail string) error {
+	var user *model.User
+	if userID != "" {
+		var err error
+		user, err = a.store.GetUserByID(userID)
+		if err != nil {
+			return errors.Wrap(err, "invalid username or password")
+		}
+	}
+
+	if user == nil {
+		return errors.New("invalid username or password")
+	}
+
+	if !auth.ComparePassword(user.Password, oldPassword) {
+		a.logger.Debug("Invalid password for user", mlog.String("userID", user.ID))
+		return errors.New("invalid username or password")
+	}
+
+	err := a.store.UpdateUserEmailByID(userID, newEmail)
+	if err != nil {
+		return errors.Wrap(err, "unable to update email")
+	}
+
+	return nil
+}
+
+func (a *App) ChangeUsername(userID, oldPassword, newUsername string) error {
+	var user *model.User
+	if userID != "" {
+		var err error
+		user, err = a.store.GetUserByID(userID)
+		if err != nil {
+			return errors.Wrap(err, "invalid username or password")
+		}
+	}
+
+	if user == nil {
+		return errors.New("invalid username or password")
+	}
+
+	if !auth.ComparePassword(user.Password, oldPassword) {
+		a.logger.Debug("Invalid password for user", mlog.String("userID", user.ID))
+		return errors.New("invalid username or password")
+	}
+
+	err := a.store.UpdateUserUsernameByID(userID, newUsername)
+	if err != nil {
+		return errors.Wrap(err, "unable to update username")
+	}
+
+	return nil
+}

@@ -26,6 +26,8 @@ func (a *API) registerAuthRoutes(r *mux.Router) {
 		r.HandleFunc("/registerorfetch", a.handleRegisterOrFetch).Methods("POST")
 		r.HandleFunc("/teams/{teamID}/regenerate_signup_token", a.sessionRequired(a.handlePostTeamRegenerateSignupToken)).Methods("POST")
 		r.HandleFunc("/users/{userID}/changepassword", a.sessionRequired(a.handleChangePassword)).Methods("POST")
+		r.HandleFunc("/users/{userID}/changeemail", a.sessionRequired(a.handleChangeEmail)).Methods("POST")
+		r.HandleFunc("/users/{userID}/changeusername", a.sessionRequired(a.handleChangeUsername)).Methods("POST")
 	}
 }
 
@@ -415,6 +417,158 @@ func (a *API) handleChangePassword(w http.ResponseWriter, r *http.Request) {
 	defer a.audit.LogRecord(audit.LevelAuth, auditRec)
 
 	if err = a.app.ChangePassword(userID, requestData.OldPassword, requestData.NewPassword); err != nil {
+		a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
+		return
+	}
+
+	jsonStringResponse(w, http.StatusOK, "{}")
+	auditRec.Success()
+}
+
+func (a *API) handleChangeEmail(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation POST /users/{userID}/changeemail changeEmail
+	//
+	// Change a user's email
+	//
+	// ---
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: userID
+	//   in: path
+	//   description: User ID
+	//   required: true
+	//   type: string
+	// - name: body
+	//   in: body
+	//   description: Change email request
+	//   required: true
+	//   schema:
+	//     "$ref": "#/definitions/ChangeEmailRequest"
+	// security:
+	// - BearerAuth: []
+	// responses:
+	//   '200':
+	//     description: success
+	//   '400':
+	//     description: invalid request
+	//     schema:
+	//       "$ref": "#/definitions/ErrorResponse"
+	//   '500':
+	//     description: internal error
+	//     schema:
+	//       "$ref": "#/definitions/ErrorResponse"
+	if a.MattermostAuth {
+		a.errorResponse(w, r, model.NewErrNotImplemented("not permitted in plugin mode"))
+		return
+	}
+
+	if len(a.singleUserToken) > 0 {
+		// Not permitted in single-user mode
+		a.errorResponse(w, r, model.NewErrUnauthorized("not permitted in single-user mode"))
+		return
+	}
+
+	vars := mux.Vars(r)
+	userID := vars["userID"]
+
+	requestBody, err := io.ReadAll(r.Body)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	var requestData model.ChangeEmailRequest
+	if err = json.Unmarshal(requestBody, &requestData); err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	if err = requestData.IsValid(); err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	auditRec := a.makeAuditRecord(r, "changeEmail", audit.Fail)
+	defer a.audit.LogRecord(audit.LevelAuth, auditRec)
+
+	if err = a.app.ChangeEmail(userID, requestData.Password, requestData.NewEmail); err != nil {
+		a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
+		return
+	}
+
+	jsonStringResponse(w, http.StatusOK, "{}")
+	auditRec.Success()
+}
+
+func (a *API) handleChangeUsername(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation POST /users/{userID}/changeusername changeUsername
+	//
+	// Change username
+	//
+	// ---
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: userID
+	//   in: path
+	//   description: User ID
+	//   required: true
+	//   type: string
+	// - name: body
+	//   in: body
+	//   description: Change username request
+	//   required: true
+	//   schema:
+	//     "$ref": "#/definitions/ChangeUsernameRequest"
+	// security:
+	// - BearerAuth: []
+	// responses:
+	//   '200':
+	//     description: success
+	//   '400':
+	//     description: invalid request
+	//     schema:
+	//       "$ref": "#/definitions/ErrorResponse"
+	//   '500':
+	//     description: internal error
+	//     schema:
+	//       "$ref": "#/definitions/ErrorResponse"
+	if a.MattermostAuth {
+		a.errorResponse(w, r, model.NewErrNotImplemented("not permitted in plugin mode"))
+		return
+	}
+
+	if len(a.singleUserToken) > 0 {
+		// Not permitted in single-user mode
+		a.errorResponse(w, r, model.NewErrUnauthorized("not permitted in single-user mode"))
+		return
+	}
+
+	vars := mux.Vars(r)
+	userID := vars["userID"]
+
+	requestBody, err := io.ReadAll(r.Body)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	var requestData model.ChangeUsernameRequest
+	if err = json.Unmarshal(requestBody, &requestData); err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	if err = requestData.IsValid(); err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	auditRec := a.makeAuditRecord(r, "changeUsername", audit.Fail)
+	defer a.audit.LogRecord(audit.LevelAuth, auditRec)
+
+	if err = a.app.ChangeUsername(userID, requestData.Password, requestData.NewUsername); err != nil {
 		a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
 		return
 	}

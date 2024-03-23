@@ -46,7 +46,7 @@ describe('Login actions', () => {
 
         // Can log in registered user
         cy.log('**Can log in registered user**')
-        loginUser(password)
+        loginUser(username, password)
 
         // Can change password
         cy.log('**Can change password**')
@@ -64,7 +64,26 @@ describe('Login actions', () => {
 
         // Can log in user with new password
         cy.log('**Can log in user with new password**')
-        loginUser(newPassword).then(() => resetPassword(newPassword))
+        loginUser(username, newPassword).then(() => resetPassword(newPassword))
+        logoutUser()
+
+        // Can change username
+        cy.log('**Can change username**')
+        const newUsername = 'new_username'
+        cy.get('.SidebarUserMenu').click()
+        cy.get('.menu-name').contains('Change username').click()
+        cy.location('pathname').should('eq', '/change_username')
+        cy.get('.ChangeUsernamePage').contains('Change Username')
+        cy.get('#login-password').type(password)
+        cy.get('#login-newusername').type(newUsername)
+        cy.get('button').contains('Change username').click()
+        cy.get('.succeeded').click()
+        workspaceIsAvailable()
+        logoutUser()
+
+        // Can log in user with new username
+        cy.log('**Can log in user with new username**')
+        loginUser(newUsername, password).then(() => resetPassword(newUsername))
         logoutUser()
 
         // Can't register second user without invite link
@@ -81,7 +100,7 @@ describe('Login actions', () => {
 
         // Copy invite link
         cy.log('**Copy invite link**')
-        loginUser(password)
+        loginUser(newUsername, password)
         cy.get('.Sidebar .SidebarUserMenu').click()
         cy.get('.menu-name').contains('Invite users').click()
         cy.get('.Button').contains('Copy link').click()
@@ -107,9 +126,9 @@ describe('Login actions', () => {
         return cy.get('.Sidebar').should('exist')
     }
 
-    const loginUser = (withPassword: string) => {
+    const loginUser = (withUsername: string, withPassword: string) => {
         cy.visit('/login')
-        cy.get('#login-username').type(username)
+        cy.get('#login-username').type(withUsername)
         cy.get('#login-password').type(withPassword)
         cy.get('button').contains('Log in').click()
         return workspaceIsAvailable()

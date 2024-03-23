@@ -958,6 +958,16 @@ func (s *SQLStore) UpdateUserPasswordByID(userID string, password string) error 
 
 }
 
+func (s *SQLStore) UpdateUserEmailByID(userID string, email string) error {
+	return s.updateUserEmailByID(s.db, userID, email)
+
+}
+
+func (s *SQLStore) UpdateUserUsernameByID(userID string, username string) error {
+	return s.updateUserUsernameByID(s.db, userID, username)
+
+}
+
 func (s *SQLStore) UpsertNotificationHint(hint *model.NotificationHint, notificationFreq time.Duration) (*model.NotificationHint, error) {
 	return s.upsertNotificationHint(s.db, hint, notificationFreq)
 

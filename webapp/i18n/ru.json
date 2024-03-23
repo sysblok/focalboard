@@ -244,6 +244,8 @@
   "Sidebar.about": "О Focalboard",
   "Sidebar.add-board": "+ Добавить доску",
   "Sidebar.changePassword": "Изменить пароль",
+  "Sidebar.changeUsername": "Изменить имя пользователя",
+  "Sidebar.changeEmail": "Изменить email",
   "Sidebar.delete-board": "Удалить доску",
   "Sidebar.duplicate-board": "Дублировать доску",
   "Sidebar.export-archive": "Экспорт архива",
