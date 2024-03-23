@@ -56,15 +56,15 @@ func (s *SQLStore) CleanUpSessions(expireTime int64) error {
 
 }
 
-func (s *SQLStore) CreateBoardsAndBlocks(bab *model.BoardsAndBlocks, userID string) (*model.BoardsAndBlocks, error) {
+func (s *SQLStore) CreateBoardsAndBlocks(bab *model.BoardsAndBlocks, userID string, preserveMetadata bool) (*model.BoardsAndBlocks, error) {
 	if s.dbType == model.SqliteDBType {
-		return s.createBoardsAndBlocks(s.db, bab, userID)
+		return s.createBoardsAndBlocks(s.db, bab, userID, preserveMetadata)
 	}
 	tx, txErr := s.db.BeginTx(context.Background(), nil)
 	if txErr != nil {
 		return nil, txErr
 	}
-	result, err := s.createBoardsAndBlocks(tx, bab, userID)
+	result, err := s.createBoardsAndBlocks(tx, bab, userID, preserveMetadata)
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			s.logger.Error("transaction rollback error", mlog.Err(rollbackErr), mlog.String("methodName", "CreateBoardsAndBlocks"))
@@ -80,15 +80,15 @@ func (s *SQLStore) CreateBoardsAndBlocks(bab *model.BoardsAndBlocks, userID stri
 
 }
 
-func (s *SQLStore) CreateBoardsAndBlocksWithAdmin(bab *model.BoardsAndBlocks, userID string) (*model.BoardsAndBlocks, []*model.BoardMember, error) {
+func (s *SQLStore) CreateBoardsAndBlocksWithAdmin(bab *model.BoardsAndBlocks, userID string, preserveMetadata bool) (*model.BoardsAndBlocks, []*model.BoardMember, error) {
 	if s.dbType == model.SqliteDBType {
-		return s.createBoardsAndBlocksWithAdmin(s.db, bab, userID)
+		return s.createBoardsAndBlocksWithAdmin(s.db, bab, userID, preserveMetadata)
 	}
 	tx, txErr := s.db.BeginTx(context.Background(), nil)
 	if txErr != nil {
 		return nil, nil, txErr
 	}
-	result, resultVar1, err := s.createBoardsAndBlocksWithAdmin(tx, bab, userID)
+	result, resultVar1, err := s.createBoardsAndBlocksWithAdmin(tx, bab, userID, preserveMetadata)
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			s.logger.Error("transaction rollback error", mlog.Err(rollbackErr), mlog.String("methodName", "CreateBoardsAndBlocksWithAdmin"))
@@ -605,13 +605,13 @@ func (s *SQLStore) GetUsersList(userIDs []string, showEmail bool, showName bool)
 
 func (s *SQLStore) InsertBlock(block *model.Block, userID string) error {
 	if s.dbType == model.SqliteDBType {
-		return s.insertBlock(s.db, block, userID)
+		return s.insertBlock(s.db, block, userID, false)
 	}
 	tx, txErr := s.db.BeginTx(context.Background(), nil)
 	if txErr != nil {
 		return txErr
 	}
-	err := s.insertBlock(tx, block, userID)
+	err := s.insertBlock(tx, block, userID, false)
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			s.logger.Error("transaction rollback error", mlog.Err(rollbackErr), mlog.String("methodName", "InsertBlock"))

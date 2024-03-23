@@ -111,9 +111,9 @@ type Store interface {
 	SearchBoardsForUserInTeam(teamID, term, userID string) ([]*model.Board, error)
 
 	// @withTransaction
-	CreateBoardsAndBlocksWithAdmin(bab *model.BoardsAndBlocks, userID string) (*model.BoardsAndBlocks, []*model.BoardMember, error)
+	CreateBoardsAndBlocksWithAdmin(bab *model.BoardsAndBlocks, userID string, preserveMetadata bool) (*model.BoardsAndBlocks, []*model.BoardMember, error)
 	// @withTransaction
-	CreateBoardsAndBlocks(bab *model.BoardsAndBlocks, userID string) (*model.BoardsAndBlocks, error)
+	CreateBoardsAndBlocks(bab *model.BoardsAndBlocks, userID string, preserveMetadata bool) (*model.BoardsAndBlocks, error)
 	// @withTransaction
 	PatchBoardsAndBlocks(pbab *model.PatchBoardsAndBlocks, userID string) (*model.BoardsAndBlocks, error)
 	// @withTransaction

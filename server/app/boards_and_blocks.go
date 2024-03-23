@@ -7,15 +7,15 @@ import (
 	"github.com/mattermost/mattermost-server/v6/shared/mlog"
 )
 
-func (a *App) CreateBoardsAndBlocks(bab *model.BoardsAndBlocks, userID string, addMember bool) (*model.BoardsAndBlocks, error) {
+func (a *App) CreateBoardsAndBlocks(bab *model.BoardsAndBlocks, userID string, addMember bool, preserveMetadata bool) (*model.BoardsAndBlocks, error) {
 	var newBab *model.BoardsAndBlocks
 	var members []*model.BoardMember
 	var err error
 
 	if addMember {
-		newBab, members, err = a.store.CreateBoardsAndBlocksWithAdmin(bab, userID)
+		newBab, members, err = a.store.CreateBoardsAndBlocksWithAdmin(bab, userID, preserveMetadata)
 	} else {
-		newBab, err = a.store.CreateBoardsAndBlocks(bab, userID)
+		newBab, err = a.store.CreateBoardsAndBlocks(bab, userID, preserveMetadata)
 	}
 
 	if err != nil {

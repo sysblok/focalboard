@@ -15,8 +15,8 @@ func (e BlockDoesntBelongToBoardsErr) Error() string {
 	return fmt.Sprintf("block %s doesn't belong to any of the boards in the delete request", e.blockID)
 }
 
-func (s *SQLStore) createBoardsAndBlocksWithAdmin(db sq.BaseRunner, bab *model.BoardsAndBlocks, userID string) (*model.BoardsAndBlocks, []*model.BoardMember, error) {
-	newBab, err := s.createBoardsAndBlocks(db, bab, userID)
+func (s *SQLStore) createBoardsAndBlocksWithAdmin(db sq.BaseRunner, bab *model.BoardsAndBlocks, userID string, preserveMetadata bool) (*model.BoardsAndBlocks, []*model.BoardMember, error) {
+	newBab, err := s.createBoardsAndBlocks(db, bab, userID, preserveMetadata)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -41,7 +41,7 @@ func (s *SQLStore) createBoardsAndBlocksWithAdmin(db sq.BaseRunner, bab *model.B
 	return newBab, members, nil
 }
 
-func (s *SQLStore) createBoardsAndBlocks(db sq.BaseRunner, bab *model.BoardsAndBlocks, userID string) (*model.BoardsAndBlocks, error) {
+func (s *SQLStore) createBoardsAndBlocks(db sq.BaseRunner, bab *model.BoardsAndBlocks, userID string, preserveMetadata bool) (*model.BoardsAndBlocks, error) {
 	boards := []*model.Board{}
 	blocks := []*model.Block{}
 
@@ -56,7 +56,7 @@ func (s *SQLStore) createBoardsAndBlocks(db sq.BaseRunner, bab *model.BoardsAndB
 
 	for _, block := range bab.Blocks {
 		b := block
-		err := s.insertBlock(db, b, userID)
+		err := s.insertBlock(db, b, userID, preserveMetadata)
 		if err != nil {
 			return nil, err
 		}
@@ -179,5 +179,5 @@ func (s *SQLStore) duplicateBoard(db sq.BaseRunner, boardID string, userID strin
 		return nil, nil, err
 	}
 
-	return s.createBoardsAndBlocksWithAdmin(db, bab, userID)
+	return s.createBoardsAndBlocksWithAdmin(db, bab, userID, false)
 }

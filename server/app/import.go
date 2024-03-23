@@ -224,8 +224,10 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 					if err2 := json.Unmarshal(archiveLine.Data, &block); err2 != nil {
 						return nil, fmt.Errorf("invalid block in archive line %d: %w", lineNum, err2)
 					}
-					// block.ModifiedBy = userID
-					// block.UpdateAt = now
+					if !opt.PreserveMetadata {
+						block.ModifiedBy = userID
+						block.UpdateAt = now
+					}
 					block.BoardID = boardID
 					boardsAndBlocks.Blocks = append(boardsAndBlocks.Blocks, block)
 				case "boardMember":
@@ -261,7 +263,7 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 		return nil, fmt.Errorf("error generating archive block IDs: %w", err)
 	}
 
-	boardsAndBlocks, err = a.CreateBoardsAndBlocks(boardsAndBlocks, opt.ModifiedBy, false)
+	boardsAndBlocks, err = a.CreateBoardsAndBlocks(boardsAndBlocks, opt.ModifiedBy, false, opt.PreserveMetadata)
 	if err != nil {
 		return nil, fmt.Errorf("error inserting archive blocks: %w", err)
 	}

@@ -160,8 +160,9 @@ func (a *API) handleArchiveImport(w http.ResponseWriter, r *http.Request) {
 	auditRec.AddMeta("size", handle.Size)
 
 	opt := model.ImportArchiveOptions{
-		TeamID:     teamID,
-		ModifiedBy: userID,
+		TeamID:           teamID,
+		ModifiedBy:       userID,
+		PreserveMetadata: true,
 	}
 
 	board, errr := a.app.ImportArchive(file, opt)
@@ -174,7 +175,7 @@ func (a *API) handleArchiveImport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonStringResponse(w, http.StatusOK, "{\"boardId\": \"" + board + "\"}")
+	jsonStringResponse(w, http.StatusOK, "{\"boardId\": \""+board+"\"}")
 	auditRec.Success()
 }
 

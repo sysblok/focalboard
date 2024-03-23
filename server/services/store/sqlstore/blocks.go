@@ -227,7 +227,7 @@ func (s *SQLStore) blocksFromRows(rows *sql.Rows) ([]*model.Block, error) {
 	return results, nil
 }
 
-func (s *SQLStore) insertBlock(db sq.BaseRunner, block *model.Block, userID string) error {
+func (s *SQLStore) insertBlock(db sq.BaseRunner, block *model.Block, userID string, preserveMetadata bool) error {
 	if err := block.IsValid(); err != nil {
 		return fmt.Errorf("error validating block %s: %w", block.ID, err)
 	}
@@ -242,10 +242,12 @@ func (s *SQLStore) insertBlock(db sq.BaseRunner, block *model.Block, userID stri
 		return err
 	}
 
-	block.UpdateAt = utils.GetMillis()
-	block.CreateAt = utils.GetMillis()
-	block.ModifiedBy = userID
-	block.CreatedBy = userID
+	if !preserveMetadata {
+		block.UpdateAt = utils.GetMillis()
+		block.CreateAt = utils.GetMillis()
+		block.ModifiedBy = userID
+		block.CreatedBy = userID
+	}
 
 	insertQuery := s.getQueryBuilder(db).Insert("").
 		Columns(
@@ -322,7 +324,7 @@ func (s *SQLStore) patchBlock(db sq.BaseRunner, blockID string, blockPatch *mode
 	}
 
 	block := blockPatch.Patch(existingBlock)
-	return s.insertBlock(db, block, userID)
+	return s.insertBlock(db, block, userID, false)
 }
 
 func (s *SQLStore) patchBlocks(db sq.BaseRunner, blockPatches *model.BlockPatchBatch, userID string) error {
@@ -342,7 +344,7 @@ func (s *SQLStore) insertBlocks(db sq.BaseRunner, blocks []*model.Block, userID 
 		}
 	}
 	for i := range blocks {
-		err := s.insertBlock(db, blocks[i], userID)
+		err := s.insertBlock(db, blocks[i], userID, false)
 		if err != nil {
 			return err
 		}

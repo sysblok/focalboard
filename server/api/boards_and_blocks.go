@@ -145,7 +145,7 @@ func (a *API) handleCreateBoardsAndBlocks(w http.ResponseWriter, r *http.Request
 	auditRec.AddMeta("blocksCount", len(newBab.Blocks))
 
 	// create boards and blocks
-	bab, err := a.app.CreateBoardsAndBlocks(newBab, userID, true)
+	bab, err := a.app.CreateBoardsAndBlocks(newBab, userID, true, false)
 	if err != nil {
 		a.errorResponse(w, r, err)
 		return
