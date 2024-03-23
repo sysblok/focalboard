@@ -426,7 +426,7 @@ func (a *API) handleChangePassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) handleChangeEmail(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation POST /users/{userID}/changeemail changePassword
+	// swagger:operation POST /users/{userID}/changeemail changeEmail
 	//
 	// Change a user's email
 	//
