@@ -98,7 +98,13 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
         type: 'date',
         options: []
     }
-    board.cardProperties = [cardProperty, memberProperty, dueProperty, labelProperty]
+    const trelloURLProperty: IPropertyTemplate = {
+        id: Utils.createGuid(),
+        name: 'Trello URL',
+        type: 'url',
+        options: []
+    }
+    board.cardProperties = [cardProperty, memberProperty, dueProperty, labelProperty, trelloURLProperty]
     boards.push(board)
 
     // Board view
@@ -151,6 +157,11 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
             blocks.push(text)
 
             outCard.fields.contentOrder = [text.id]
+        }
+
+        // Add trello URL
+        if (card.shortUrl) {
+            outCard.fields.properties[trelloURLProperty.id] = card.shortUrl
         }
 
         // Add labels
