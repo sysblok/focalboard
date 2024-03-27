@@ -104,7 +104,27 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
         type: 'url',
         options: []
     }
-    board.cardProperties = [cardProperty, memberProperty, dueProperty, labelProperty, trelloURLProperty]
+    const createdAtProperty: IPropertyTemplate = {
+        id: Utils.createGuid(),
+        name: 'Created At',
+        type: 'createdTime',
+        options: []
+    }
+    const createdByProperty: IPropertyTemplate = {
+        id: Utils.createGuid(),
+        name: 'Created By',
+        type: 'createdBy',
+        options: []
+    }
+    board.cardProperties = [
+        createdAtProperty,
+        createdByProperty,
+        cardProperty,
+        labelProperty,
+        memberProperty,
+        dueProperty,
+        trelloURLProperty
+    ]
     boards.push(board)
 
     // Board view
@@ -158,6 +178,15 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
 
             outCard.fields.contentOrder = [text.id]
         }
+
+        // Add created by, create at
+        // TODO alexeyqu fallback to Trello API if no information found (very common)
+        input.actions.filter((action) => action.type == 'createCard' && action.data.card?.id == card.id).map(
+            (action) => {
+                outCard.createAt = Date.parse(action.date)
+                outCard.createdBy = memberIdMap.get(action.idMemberCreator.toString()) ?? ''
+            }
+        )
 
         // Add trello URL
         if (card.shortUrl) {
