@@ -1212,11 +1212,11 @@ class Mutator {
                     console.log(`new user ${email}`)
                     newUserInfo.push({
                         trelloId: member.id,
-                        trelloUsername: member.username,
+                        trelloUsername: `@${member.username}`,
                         trelloFullName: member.fullName,
                         focalboardId: response.json.userId,
                         focalboardEmail: email,
-                        focalboardUsername: member.username,
+                        focalboardUsername: `@${member.username}`,
                         focalboardPassword: password,
                     })
                 } else {
