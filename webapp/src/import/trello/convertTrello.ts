@@ -10,6 +10,7 @@ import {createCheckboxBlock} from '../../blocks/checkboxBlock'
 import {Trello} from './trello'
 import {Utils} from './utils'
 import {createCommentBlock} from '../../blocks/commentBlock'
+import {slugify} from 'transliteration';
 
 // HACKHACK: To allow Utils.CreateGuid to work
 // (global.window as any) = {}
@@ -27,6 +28,13 @@ const optionColors = [
     'propColorRed',
 ]
 let optionColorIndex = 0
+
+export function makeUsername(username: string, fullName: string): string {
+    if (username.startsWith('user')) {
+        return slugify(fullName)
+    }
+    return username
+}
 
 export function convertTrello(input: Trello, memberIdMap: Map<string, string>): [Board[], Block[]] {
     const boards: Board[] = []

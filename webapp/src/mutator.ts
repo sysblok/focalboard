@@ -21,7 +21,7 @@ import {UserSettings} from './userSettings'
 import TelemetryClient, {TelemetryCategory, TelemetryActions} from './telemetry/telemetryClient'
 import {Category} from './store/sidebar'
 import {Trello} from './import/trello/trello'
-import {convertTrello} from './import/trello/convertTrello'
+import {convertTrello, makeUsername} from './import/trello/convertTrello'
 import {ArchiveUtils} from './import/archiveutils'
 
 /* eslint-disable max-lines */
@@ -1203,9 +1203,10 @@ class Mutator {
         const memberIdMap = new Map<string, string>()
         const newUserInfo: Array<Record<string, string>> = []
         await Promise.all(input.members.map(async (member) => {
-            const email = member.username + '@sysblok.ru'
+            const username = makeUsername(member.username, member.fullName)
+            const email = username + '@sysblok.ru'
             const password = Math.random().toString(36).slice(2)
-            const response = await octoClient.registerOrFetch(email, member.username, password, signupToken)
+            const response = await octoClient.registerOrFetch(email, username, password, signupToken)
             if (response.code === 200 && response.json.userId) {
                 memberIdMap.set(member.id, response.json.userId)
                 if (response.json.isNew) {
@@ -1216,7 +1217,7 @@ class Mutator {
                         trelloFullName: member.fullName,
                         focalboardId: response.json.userId,
                         focalboardEmail: email,
-                        focalboardUsername: `@${member.username}`,
+                        focalboardUsername: `@${username}`,
                         focalboardPassword: password,
                     })
                 } else {
