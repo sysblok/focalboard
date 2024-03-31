@@ -229,21 +229,6 @@ const Kanban = (props: Props) => {
             >
                 {/* Column headers */}
 
-                {!props.readonly &&
-                    <BoardPermissionGate permissions={[Permission.ManageBoardProperties]}>
-                        <div className='octo-board-header-cell narrow'>
-                            <Button
-                                onClick={addGroupClicked}
-                            >
-                                <FormattedMessage
-                                    id='BoardComponent.add-a-group'
-                                    defaultMessage='+ Add a group'
-                                />
-                            </Button>
-                        </div>
-                    </BoardPermissionGate>
-                }
-
                 {visibleGroups.map((group) => (
                     <KanbanColumnHeader
                         key={group.option.id}
@@ -271,6 +256,21 @@ const Kanban = (props: Props) => {
                             defaultMessage='Hidden columns'
                         />
                     </div>
+                }
+
+                {!props.readonly &&
+                    <BoardPermissionGate permissions={[Permission.ManageBoardProperties]}>
+                        <div className='octo-board-header-cell narrow'>
+                            <Button
+                                onClick={addGroupClicked}
+                            >
+                                <FormattedMessage
+                                    id='BoardComponent.add-a-group'
+                                    defaultMessage='+ Add a group'
+                                />
+                            </Button>
+                        </div>
+                    </BoardPermissionGate>
                 }
             </div>
 
