@@ -9,12 +9,6 @@ body {
     min-height: 100vh;
 }
 
-@media only screen and (max-width: 980px) {  
-    html, body {
-        display: none;
-    }
-}
-
 img {
     max-width: 100%;
 }
