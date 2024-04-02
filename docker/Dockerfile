@@ -3,6 +3,7 @@ FROM node:16.3.0@sha256:ca6daf1543242acb0ca59ff425509eab7defb9452f6ae07c156893db
 
 WORKDIR /webapp
 
+ENV NODE_OPTIONS=--max_old_space_size=4096
 COPY webapp/package.json /webapp/package.json
 COPY webapp/webpack.prod.js /webapp/webpack.prod.js
 COPY webapp/webpack.common.js /webapp/webpack.common.js
