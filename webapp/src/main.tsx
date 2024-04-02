@@ -16,7 +16,6 @@ import {useAppSelector} from './store/hooks'
 
 import '@mattermost/compass-icons/css/compass-icons.css'
 
-
 import './styles/variables.scss'
 import './styles/main.scss'
 import './styles/labels.scss'
