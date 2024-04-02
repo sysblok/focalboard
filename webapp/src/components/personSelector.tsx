@@ -92,7 +92,11 @@ const PersonSelector = (props: Props): JSX.Element => {
         return (
             <div
                 key={user.id}
-                className={isMulti ? 'MultiPerson-item' : 'Person-item'}
+                className={
+                    isMulti
+                    ? `MultiPerson-item propColor${Math.abs(Utils.hashCode(user.username) % 7) + 2}`
+                    : `Person-item propColor${Math.abs(Utils.hashCode(user.username) % 7) + 2}`
+                }
             >
                 {profileImg && (
                     <img
