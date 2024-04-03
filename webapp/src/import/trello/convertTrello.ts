@@ -82,7 +82,7 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
         optionsLabel.push(option)
     })
 
-    const cardProperty: IPropertyTemplate = {
+    const listProperty: IPropertyTemplate = {
         id: Utils.createGuid(),
         name: 'List',
         type: 'select',
@@ -91,7 +91,7 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
     const labelProperty: IPropertyTemplate = {
         id: Utils.createGuid(),
         name: 'Label',
-        type: 'select',
+        type: 'multiSelect',
         options: optionsLabel
     }
     const memberProperty: IPropertyTemplate = {
@@ -127,7 +127,7 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
     board.cardProperties = [
         createdAtProperty,
         createdByProperty,
-        cardProperty,
+        listProperty,
         labelProperty,
         memberProperty,
         dueProperty,
@@ -162,7 +162,7 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
         if (card.idList) {
             const optionId = optionIdMap.get(card.idList)
             if (optionId) {
-                outCard.fields.properties[cardProperty.id] = optionId
+                outCard.fields.properties[listProperty.id] = optionId
             } else {
                 console.warn(`Invalid idList: ${card.idList} for card: ${card.name}`)
                 // don't import cards without list
@@ -206,7 +206,11 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
             card.labels.forEach(label => {
                 const optionId = optionLabelIdMap.get(label.id)
                 if (optionId) {
-                    outCard.fields.properties[labelProperty.id] = optionId
+                    if (outCard.fields.properties[labelProperty.id]) {
+                        outCard.fields.properties[labelProperty.id] = [...outCard.fields.properties[labelProperty.id], optionId]
+                    } else {
+                        outCard.fields.properties[labelProperty.id] = [optionId]
+                    }
                 } else {
                     console.warn(`not found label for ${label.id}`)
                 }
