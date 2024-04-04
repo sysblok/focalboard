@@ -133,6 +133,20 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
         dueProperty,
         trelloURLProperty
     ]
+
+    const customFieldIdMap = new Map<string, string>()
+    if (input.customFields) {
+        input.customFields.forEach((f) => {
+            const field: IPropertyTemplate = {
+                id: Utils.createGuid(),
+                name: f.name,
+                type: 'text',
+                options: []
+            }
+            customFieldIdMap.set(f.id, field.id)
+            board.cardProperties = [...board.cardProperties, field]
+        })
+    }
     boards.push(board)
 
     // Board view
@@ -257,6 +271,16 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
 
                         outCard.fields.contentOrder.push(checkBlock.id)
                     })
+                }
+            })
+        }
+
+        // Add custom fields
+        if (card.customFieldItems && card.customFieldItems.length > 0) {
+            card.customFieldItems.forEach((f) => {
+                const lookup = customFieldIdMap.get(f.idCustomField)
+                if (lookup) {
+                    outCard.fields.properties[lookup] = f.value.text ?? 'not found'
                 }
             })
         }
