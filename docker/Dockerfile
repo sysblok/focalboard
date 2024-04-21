@@ -3,12 +3,14 @@ FROM node:16.3.0@sha256:ca6daf1543242acb0ca59ff425509eab7defb9452f6ae07c156893db
 
 WORKDIR /webapp
 ENV NODE_OPTIONS=--max_old_space_size=4096
-ADD webapp/ /webapp
 
-### 'CPPFLAGS="-DPNG_ARM_NEON_OPT=0"' Needed To Avoid Bug Described in: https://github.com/imagemin/optipng-bin/issues/118#issuecomment-1019838562
-### Can be Removed when Ticket will be Closed
-RUN CPPFLAGS="-DPNG_ARM_NEON_OPT=0" npm install --no-optional && \
-    npm run pack
+COPY webapp/package.json webapp/package-lock.json* ./
+
+RUN npm ci && npm cache clean --force
+
+COPY webapp/ /webapp
+
+RUN npm run pack
 
 ### Go build
 FROM golang:1.18.3@sha256:b203dc573d81da7b3176264bfa447bd7c10c9347689be40540381838d75eebef AS gobuild
