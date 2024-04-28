@@ -166,6 +166,7 @@ export default function KanbanColumnHeader(props: Props): JSX.Element {
                             <Menu>
                                 <Menu.Text
                                     id='hide'
+                                    disabled={true}
                                     icon={<HideIcon/>}
                                     name={intl.formatMessage({id: 'BoardComponent.hide', defaultMessage: 'Hide'})}
                                     onClick={() => mutator.hideViewColumn(board.id, activeView, group.option.id || '')}
@@ -174,6 +175,7 @@ export default function KanbanColumnHeader(props: Props): JSX.Element {
                                     <>
                                         <Menu.Text
                                             id='delete'
+                                            disabled={true}
                                             icon={<DeleteIcon/>}
                                             name={intl.formatMessage({id: 'BoardComponent.delete', defaultMessage: 'Delete'})}
                                             onClick={() => mutator.deletePropertyOption(board.id, board.cardProperties, groupByProperty!, group.option)}

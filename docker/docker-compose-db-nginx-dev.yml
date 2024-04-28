@@ -1,0 +1,105 @@
+version: "3"
+
+services:
+
+  app-backend:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.back.dev
+    container_name: focalboard-back
+    depends_on:
+      - focalboard-db
+      - app-frontend
+    expose:
+      - 8000
+    environment:
+      - VIRTUAL_HOST=${FOCALBOARD_HOST}
+      - LETSENCRYPT_HOST=${FOCALBOARD_HOST}
+      - VIRTUAL_PORT=8000
+      - VIRTUAL_PROTO=http
+    volumes:
+      - "./config.json:/opt/focalboard/config.json"
+      - fbdata:/opt/focalboard/data
+      - pack:/opt/focalboard/pack
+    restart: always
+    networks:
+      - proxy
+      - default
+
+  app-frontend:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.front.dev
+    container_name: focalboard-front
+    volumes:
+      - ../webapp/src:/webapp/src
+      - pack:/webapp/pack
+    restart: always
+    networks:
+      - proxy
+      - default
+
+  proxy:
+    image: jwilder/nginx-proxy:latest
+    container_name: focalboard-proxy
+    restart: always
+    ports:
+      - "8080:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./client_max_body_size.conf:/etc/nginx/conf.d/client_max_body_size.conf:ro
+      - "html:/usr/share/nginx/html"
+      - "dhparam:/etc/nginx/dhparam"
+      - "vhost:/etc/nginx/vhost.d"
+      - "certs:/etc/nginx/certs"
+      - "letsencrypt-acme:/etc/acme.sh"
+    networks:
+      - proxy
+
+  letsencrypt:
+    image: "nginxproxy/acme-companion:latest"
+    container_name: "letsencrypt-helper"
+    volumes:
+      - "html:/usr/share/nginx/html"
+      - "dhparam:/etc/nginx/dhparam"
+      - "vhost:/etc/nginx/vhost.d"
+      - "certs:/etc/nginx/certs"
+      - "/run/docker.sock:/var/run/docker.sock:ro"
+      - "letsencrypt-acme:/etc/acme.sh"
+    environment:
+      NGINX_PROXY_CONTAINER: "focalboard-proxy"
+      DEFAULT_EMAIL: ${LETSENCRYPT_EMAIL}
+    restart: "always"
+    depends_on:
+      - "proxy"
+    networks:
+      - proxy
+
+  focalboard-db:
+    image: postgres:latest
+    container_name: focalboard-postgres
+    restart: always
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # - type: bind
+      #   source: /backups
+      #   target: /backups
+    environment:
+      POSTGRES_DB: boards
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+volumes:
+  fbdata:
+  pgdata:
+  certs:
+  html:
+  vhost:
+  dhparam:
+  letsencrypt-acme:
+  pack:
+
+networks:
+  proxy:
+

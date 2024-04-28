@@ -589,7 +589,7 @@ class Mutator {
 
         const newCardProperties: IPropertyTemplate[] = cloneDeep(oldCardProperties)
         const newTemplate = newCardProperties.find((o: IPropertyTemplate) => o.id === template.id)!
-        newTemplate.options.push(option)
+        newTemplate.options.unshift(option)
 
         await this.updateBoardCardProperties(boardId, oldCardProperties, newCardProperties, description)
     }
