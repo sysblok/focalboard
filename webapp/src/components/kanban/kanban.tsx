@@ -283,10 +283,7 @@ const Kanban = (props: Props) => {
                 {/* Empty column under Add Group Button */}
                 {!props.readonly &&
                     <BoardPermissionGate permissions={[Permission.ManageBoardProperties]}>
-                        <KanbanColumn
-                            key={'empty'}
-                            onDrop={() => {}}
-                        >{null}</KanbanColumn>
+                        <div className='octo-board-column narrow'/>
                     </BoardPermissionGate>
                 }
                 {/* Columns */}
