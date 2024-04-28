@@ -227,8 +227,23 @@ const Kanban = (props: Props) => {
                 className='octo-board-header'
                 id='mainBoardHeader'
             >
-                {/* Column headers */}
+                {/* Add column button */}
+                {!props.readonly &&
+                    <BoardPermissionGate permissions={[Permission.ManageBoardProperties]}>
+                        <div className='octo-board-header-cell narrow'>
+                            <Button
+                                onClick={addGroupClicked}
+                            >
+                                <FormattedMessage
+                                    id='BoardComponent.add-a-group'
+                                    defaultMessage='+ Add a group'
+                                />
+                            </Button>
+                        </div>
+                    </BoardPermissionGate>
+                }
 
+                {/* Column headers */}
                 {visibleGroups.map((group) => (
                     <KanbanColumnHeader
                         key={group.option.id}
@@ -257,21 +272,6 @@ const Kanban = (props: Props) => {
                         />
                     </div>
                 }
-
-                {!props.readonly &&
-                    <BoardPermissionGate permissions={[Permission.ManageBoardProperties]}>
-                        <div className='octo-board-header-cell narrow'>
-                            <Button
-                                onClick={addGroupClicked}
-                            >
-                                <FormattedMessage
-                                    id='BoardComponent.add-a-group'
-                                    defaultMessage='+ Add a group'
-                                />
-                            </Button>
-                        </div>
-                    </BoardPermissionGate>
-                }
             </div>
 
             {/* Main content */}
@@ -280,6 +280,12 @@ const Kanban = (props: Props) => {
                 className='octo-board-body'
                 id='mainBoardBody'
             >
+                {/* Empty column under Add Group Button */}
+                {!props.readonly &&
+                    <BoardPermissionGate permissions={[Permission.ManageBoardProperties]}>
+                        <div className='octo-board-column narrow'/>
+                    </BoardPermissionGate>
+                }
                 {/* Columns */}
 
                 {visibleGroups.map((group) => (
