@@ -91,7 +91,11 @@ const Kanban = (props: Props) => {
         }
 
         await mutator.insertPropertyOption(board.id, board.cardProperties, groupByProperty!, option, 'add group')
-    }, [board, groupByProperty])
+
+        // Ugly hack to add the new column to the left
+        // Simulate moving it to the place of current first column
+        await onDropToColumn(option, undefined, visibleGroups[0].option, true)
+    }, [board, groupByProperty, visibleGroups])
 
     const orderAfterMoveToColumn = useCallback((cardIds: string[], columnId?: string): string[] => {
         let cardOrder = activeView.fields.cardOrder.slice()
@@ -108,7 +112,7 @@ const Kanban = (props: Props) => {
         return cardOrder
     }, [activeView, visibleGroups])
 
-    const onDropToColumn = useCallback(async (option: IPropertyOption, card?: Card, dstOption?: IPropertyOption) => {
+    const onDropToColumn = useCallback(async (option: IPropertyOption, card?: Card, dstOption?: IPropertyOption, isColumnNew?: boolean) => {
         const {selectedCardIds} = props
         const optionId = option ? option.id : undefined
 
@@ -141,6 +145,12 @@ const Kanban = (props: Props) => {
             Utils.log(`ondrop. Header option: ${dstOption.value}, column: ${option?.value}`)
 
             const visibleOptionIds = visibleGroups.map((o) => o.option.id)
+
+            // Ugly hack to add the new column to the left
+            // visibleGroups aren't updated in component yet, so add id of new column manually
+            if (isColumnNew) {
+                visibleOptionIds.push(dstOption.id)
+            }
             const srcBlockX = visibleOptionIds.indexOf(option.id)
             const dstBlockX = visibleOptionIds.indexOf(dstOption.id)
 
