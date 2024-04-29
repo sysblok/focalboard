@@ -16,7 +16,18 @@ RUN npm run pack
 FROM golang:1.18.3@sha256:b203dc573d81da7b3176264bfa447bd7c10c9347689be40540381838d75eebef AS gobuild
 
 WORKDIR /go/src/focalboard
-ADD . /go/src/focalboard
+
+# Create all necessary dirs
+RUN mkdir server && mkdir -p bin/docker
+
+# Copy files for deps installing
+COPY server/go.mod server/go.sum ./server
+
+# Install deps
+RUN cd server && go mod download
+
+# Copy all code
+COPY . /go/src/focalboard
 
 # Get target architecture 
 ARG TARGETOS
