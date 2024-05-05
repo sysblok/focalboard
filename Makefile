@@ -62,9 +62,7 @@ server-linux: ## Build server for Linux.
 	cd server; env GOOS=linux GOARCH=$(arch) go build -ldflags '$(LDFLAGS)' -tags '$(BUILD_TAGS)' -o ../bin/linux/focalboard-server ./main
 
 server-docker: ## Build server for Docker Architectures.
-	mkdir -p bin/docker
 	$(eval LDFLAGS += -X "github.com/mattermost/focalboard/server/model.Edition=linux")
-	cd server; go mod download
 	cd server; env GOCACHE=/root/.cache/go-build GOOS=$(os) GOARCH=$(arch) go build -ldflags '$(LDFLAGS)' -tags '$(BUILD_TAGS)' -o ../bin/docker/focalboard-server ./main
 
 server-win: ## Build server for Windows.
