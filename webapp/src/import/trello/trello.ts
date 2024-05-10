@@ -210,6 +210,7 @@ export enum ModelType {
 export interface CustomFieldItemValue {
     number?:  string;
     checked?: string;
+    text?: string
 }
 
 export interface Old {
