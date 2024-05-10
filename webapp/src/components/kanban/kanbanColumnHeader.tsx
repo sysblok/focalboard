@@ -175,7 +175,6 @@ export default function KanbanColumnHeader(props: Props): JSX.Element {
                                     <>
                                         <Menu.Text
                                             id='delete'
-                                            disabled={true}
                                             icon={<DeleteIcon/>}
                                             name={intl.formatMessage({id: 'BoardComponent.delete', defaultMessage: 'Delete'})}
                                             onClick={() => mutator.deletePropertyOption(board.id, board.cardProperties, groupByProperty!, group.option)}
