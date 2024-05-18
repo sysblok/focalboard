@@ -84,25 +84,25 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
 
     const listProperty: IPropertyTemplate = {
         id: Utils.createGuid(),
-        name: 'List',
+        name: 'Колонка',
         type: 'select',
         options
     }
     const labelProperty: IPropertyTemplate = {
         id: Utils.createGuid(),
-        name: 'Label',
+        name: 'Рубрика',
         type: 'multiSelect',
         options: optionsLabel
     }
     const memberProperty: IPropertyTemplate = {
         id: Utils.createGuid(),
-        name: 'Assignee',
+        name: 'Ответственный',
         type: 'multiPerson',
         options: []
     }
     const dueProperty: IPropertyTemplate = {
         id: Utils.createGuid(),
-        name: 'Due',
+        name: 'Дедлайн',
         type: 'date',
         options: []
     }
@@ -114,13 +114,13 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
     }
     const createdAtProperty: IPropertyTemplate = {
         id: Utils.createGuid(),
-        name: 'Created At',
+        name: 'Время создания',
         type: 'createdTime',
         options: []
     }
     const createdByProperty: IPropertyTemplate = {
         id: Utils.createGuid(),
-        name: 'Created By',
+        name: 'Создатель',
         type: 'createdBy',
         options: []
     }
@@ -151,7 +151,7 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
 
     // Board view
     const view = createBoardView()
-    view.title = 'Board View'
+    view.title = 'Канбан'
     view.fields.viewType = 'board'
     view.boardId = board.id
     view.parentId = board.id
