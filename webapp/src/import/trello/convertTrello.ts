@@ -125,13 +125,10 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
         options: []
     }
     board.cardProperties = [
-        createdAtProperty,
-        createdByProperty,
         listProperty,
         labelProperty,
         memberProperty,
-        dueProperty,
-        trelloURLProperty
+        dueProperty
     ]
 
     const customFieldIdMap = new Map<string, string>()
@@ -147,6 +144,12 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
             board.cardProperties = [...board.cardProperties, field]
         })
     }
+    board.cardProperties = [
+        ...board.cardProperties, 
+        createdAtProperty,
+        createdByProperty,
+        trelloURLProperty
+    ]
     boards.push(board)
 
     // Board view
