@@ -177,43 +177,46 @@ const Kanban = (props: Props) => {
             return
         }
         Utils.log(`onDropToCard: ${dstCard.title}`)
-        const {selectedCardIds} = props
+        // const {selectedCardIds} = props
         const optionId = dstCard.fields.properties[groupByProperty.id]
 
-        const draggedCardIds = Array.from(new Set(selectedCardIds).add(srcCard.id))
+        // const draggedCardIds = Array.from(new Set(selectedCardIds).add(srcCard.id))
 
-        const description = draggedCardIds.length > 1 ? `drag ${draggedCardIds.length} cards` : 'drag card'
+        // const description = draggedCardIds.length > 1 ? `drag ${draggedCardIds.length} cards` : 'drag card'
+        const description = 'drag card'
+        const draggedCard = srcCard
 
         // Update dstCard order
-        const cardsById: { [key: string]: Card } = cards.reduce((acc: { [key: string]: Card }, card: Card): { [key: string]: Card } => {
-            acc[card.id] = card
-            return acc
-        }, {})
-        const draggedCards: Card[] = draggedCardIds.map((o: string) => cardsById[o]).filter((c) => c)
-        let cardOrder = cards.map((o) => o.id)
-        const isDraggingDown = cardOrder.indexOf(srcCard.id) <= cardOrder.indexOf(dstCard.id)
-        cardOrder = cardOrder.filter((id) => !draggedCardIds.includes(id))
-        let destIndex = cardOrder.indexOf(dstCard.id)
-        if (srcCard.fields.properties[groupByProperty!.id] === optionId && isDraggingDown) {
-            // If the cards are in the same column and dragging down, drop after the target dstCard
-            destIndex += 1
-        }
-        cardOrder.splice(destIndex, 0, ...draggedCardIds)
+        // const cardsById: { [key: string]: Card } = cards.reduce((acc: { [key: string]: Card }, card: Card): { [key: string]: Card } => {
+        //     acc[card.id] = card
+        //     return acc
+        // }, {})
+        // const draggedCards: Card[] = draggedCardIds.map((o: string) => cardsById[o]).filter((c) => c)
+        // let cardOrder = cards.map((o) => o.id)
+        // const isDraggingDown = cardOrder.indexOf(srcCard.id) <= cardOrder.indexOf(dstCard.id)
+        // cardOrder = cardOrder.filter((id) => !draggedCardIds.includes(id))
+        // let destIndex = cardOrder.indexOf(dstCard.id)
+        // if (srcCard.fields.properties[groupByProperty!.id] === optionId && isDraggingDown) {
+        //     // If the cards are in the same column and dragging down, drop after the target dstCard
+        //     destIndex += 1
+        // }
+        // cardOrder.splice(destIndex, 0, ...draggedCardIds)
 
         await mutator.performAsUndoGroup(async () => {
             // Update properties of dragged cards
             const awaits = []
-            for (const draggedCard of draggedCards) {
+            // for (const draggedCard of draggedCards) {
                 Utils.log(`draggedCard: ${draggedCard.title}, column: ${optionId}`)
                 const oldOptionId = draggedCard.fields.properties[groupByProperty!.id]
                 if (optionId !== oldOptionId) {
                     awaits.push(mutator.changePropertyValue(props.board.id, draggedCard, groupByProperty!.id, optionId, description))
                 }
-            }
+            // }
             await Promise.all(awaits)
-            await mutator.changeViewCardOrder(props.board.id, activeView.id, activeView.fields.cardOrder, cardOrder, description)
+            // await mutator.changeViewCardOrder(props.board.id, activeView.id, activeView.fields.cardOrder, cardOrder, description)
         })
-    }, [cards, activeView.id, activeView.fields.cardOrder, groupByProperty, props.selectedCardIds])
+    // }, [cards, activeView.id, activeView.fields.cardOrder, groupByProperty, props.selectedCardIds])
+    }, [activeView.id, groupByProperty, props.board.id])
 
     const [showCalculationsMenu, setShowCalculationsMenu] = useState<Map<string, boolean>>(new Map<string, boolean>())
     const toggleOptions = (templateId: string, show: boolean) => {
