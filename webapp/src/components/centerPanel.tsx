@@ -326,38 +326,23 @@ const CenterPanel = (props: Props) => {
     }, [showCard])
 
     const cardClicked = useCallback((e: React.MouseEvent, card: Card): void => {
-        const {activeView, cards} = props
+        const {activeView} = props
 
         if (e.shiftKey) {
             let newSelectedCardIds = [...selectedCardIds]
-            if (newSelectedCardIds.length > 0 && (e.metaKey || e.ctrlKey)) {
-                // Cmd+Shift+Click: Extend the selection
-                const orderedCardIds = cards.map((o) => o.id)
-                const lastCardId = newSelectedCardIds[newSelectedCardIds.length - 1]
-                const srcIndex = orderedCardIds.indexOf(lastCardId)
-                const destIndex = orderedCardIds.indexOf(card.id)
-                const newCardIds = (srcIndex < destIndex) ? orderedCardIds.slice(srcIndex, destIndex + 1) : orderedCardIds.slice(destIndex, srcIndex + 1)
-                for (const newCardId of newCardIds) {
-                    if (!newSelectedCardIds.includes(newCardId)) {
-                        newSelectedCardIds.push(newCardId)
-                    }
-                }
-                setSelectedCardIds(newSelectedCardIds)
+            // Shift+Click: add to selection
+            if (newSelectedCardIds.includes(card.id)) {
+                newSelectedCardIds = selectedCardIds.filter((o) => o !== card.id)
             } else {
-                // Shift+Click: add to selection
-                if (newSelectedCardIds.includes(card.id)) {
-                    newSelectedCardIds = selectedCardIds.filter((o) => o !== card.id)
-                } else {
-                    newSelectedCardIds.push(card.id)
-                }
-                setSelectedCardIds(newSelectedCardIds)
+                newSelectedCardIds.push(card.id)
             }
+            setSelectedCardIds(newSelectedCardIds)
         } else if (activeView.fields.viewType === 'board' || activeView.fields.viewType === 'gallery') {
             showCard(card.id)
         }
 
         e.stopPropagation()
-    }, [selectedCardIds, props.activeView, props.cards, showCard])
+    }, [selectedCardIds, props.activeView.fields.viewType, showCard])
 
     const hiddenCardCountNotifyHandler = useCallback((show: boolean) => {
         setShowHiddenCardCountNotification(show)
