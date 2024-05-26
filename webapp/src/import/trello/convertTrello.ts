@@ -84,25 +84,25 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
 
     const listProperty: IPropertyTemplate = {
         id: Utils.createGuid(),
-        name: 'List',
+        name: 'Колонка',
         type: 'select',
         options
     }
     const labelProperty: IPropertyTemplate = {
         id: Utils.createGuid(),
-        name: 'Label',
+        name: 'Рубрика',
         type: 'multiSelect',
         options: optionsLabel
     }
     const memberProperty: IPropertyTemplate = {
         id: Utils.createGuid(),
-        name: 'Assignee',
+        name: 'Ответственный',
         type: 'multiPerson',
         options: []
     }
     const dueProperty: IPropertyTemplate = {
         id: Utils.createGuid(),
-        name: 'Due',
+        name: 'Дедлайн',
         type: 'date',
         options: []
     }
@@ -114,30 +114,47 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
     }
     const createdAtProperty: IPropertyTemplate = {
         id: Utils.createGuid(),
-        name: 'Created At',
+        name: 'Время создания',
         type: 'createdTime',
         options: []
     }
     const createdByProperty: IPropertyTemplate = {
         id: Utils.createGuid(),
-        name: 'Created By',
+        name: 'Создатель',
         type: 'createdBy',
         options: []
     }
     board.cardProperties = [
-        createdAtProperty,
-        createdByProperty,
         listProperty,
         labelProperty,
         memberProperty,
-        dueProperty,
+        dueProperty
+    ]
+
+    const customFieldIdMap = new Map<string, string>()
+    if (input.customFields) {
+        input.customFields.forEach((f) => {
+            const field: IPropertyTemplate = {
+                id: Utils.createGuid(),
+                name: f.name,
+                type: 'text',
+                options: []
+            }
+            customFieldIdMap.set(f.id, field.id)
+            board.cardProperties = [...board.cardProperties, field]
+        })
+    }
+    board.cardProperties = [
+        ...board.cardProperties, 
+        createdAtProperty,
+        createdByProperty,
         trelloURLProperty
     ]
     boards.push(board)
 
     // Board view
     const view = createBoardView()
-    view.title = 'Board View'
+    view.title = 'Канбан'
     view.fields.viewType = 'board'
     view.boardId = board.id
     view.parentId = board.id
@@ -257,6 +274,16 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
 
                         outCard.fields.contentOrder.push(checkBlock.id)
                     })
+                }
+            })
+        }
+
+        // Add custom fields
+        if (card.customFieldItems && card.customFieldItems.length > 0) {
+            card.customFieldItems.forEach((f) => {
+                const lookup = customFieldIdMap.get(f.idCustomField)
+                if (lookup) {
+                    outCard.fields.properties[lookup] = f.value.text ?? 'not found'
                 }
             })
         }
