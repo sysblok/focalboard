@@ -14,6 +14,7 @@ import MenuWrapper from '../../widgets/menuWrapper'
 import {getMe, setMe} from '../../store/users'
 import {useAppSelector, useAppDispatch} from '../../store/hooks'
 import {Utils} from '../../utils'
+import {getClientConfig} from '../../store/clientConfig'
 
 import ModalWrapper from '../modalWrapper'
 
@@ -31,6 +32,7 @@ const SidebarUserMenu = () => {
     const [showRegistrationLinkDialog, setShowRegistrationLinkDialog] = useState(false)
     const user = useAppSelector<IUser|null>(getMe)
     const intl = useIntl()
+    const clientConfig = useAppSelector(getClientConfig)
 
     if (Utils.isFocalboardPlugin()) {
         return <></>
@@ -42,7 +44,7 @@ const SidebarUserMenu = () => {
                     <div className='logo'>
                         <div className='logo-title'>
                             <FocalboardLogoIcon/>
-                            <span>{'Focalboard'}</span>
+                            <span>{clientConfig.featureFlags['FOCALBOARD_ENVIRONMENT'] == 'prod' ? 'Борда' : 'Focalboard'}</span>
                             <div className='versionFrame'>
                                 <div
                                     className='version'
