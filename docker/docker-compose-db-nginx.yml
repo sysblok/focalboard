@@ -13,6 +13,7 @@ services:
     environment:
       - VIRTUAL_HOST=${FOCALBOARD_HOST}
       - LETSENCRYPT_HOST=${FOCALBOARD_HOST}
+      - FOCALBOARD_ENVIRONMENT=${FOCALBOARD_ENVIRONMENT:-dev}
       - VIRTUAL_PORT=8000
       - VIRTUAL_PROTO=http
     volumes:
