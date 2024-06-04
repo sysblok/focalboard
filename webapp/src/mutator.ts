@@ -787,18 +787,18 @@ class Mutator {
     }
 
     // function stopped being used after the commit da1d7877 - filters are saved in store
-    // async changeViewFilter(boardId: string, viewId: string, oldFilter: FilterGroup, filter: FilterGroup): Promise<void> {
-    //     await undoManager.perform(
-    //         async () => {
-    //             await octoClient.patchBlock(boardId, viewId, {updatedFields: {filter}})
-    //         },
-    //         async () => {
-    //             await octoClient.patchBlock(boardId, viewId, {updatedFields: {filter: oldFilter}})
-    //         },
-    //         'filter',
-    //         this.undoGroupId,
-    //     )
-    // }
+    async changeViewFilter(boardId: string, viewId: string, oldFilter: FilterGroup, filter: FilterGroup): Promise<void> {
+        await undoManager.perform(
+            async () => {
+                await octoClient.patchBlock(boardId, viewId, {updatedFields: {filter}})
+            },
+            async () => {
+                await octoClient.patchBlock(boardId, viewId, {updatedFields: {filter: oldFilter}})
+            },
+            'filter',
+            this.undoGroupId,
+        )
+    }
 
     async changeViewGroupById(boardId: string, viewId: string, oldGroupById: string|undefined, groupById: string): Promise<void> {
         await undoManager.perform(
