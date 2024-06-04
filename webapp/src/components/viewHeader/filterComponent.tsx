@@ -3,11 +3,13 @@
 import React from 'react'
 import {FormattedMessage} from 'react-intl'
 
+import {useAppDispatch} from '../../store/hooks'
+import {updateViewFilter} from '../../store/views'
+
 import {FilterClause, FilterCondition, createFilterClause} from '../../blocks/filterClause'
 import {createFilterGroup, isAFilterGroupInstance} from '../../blocks/filterGroup'
 import {Board, IPropertyTemplate} from '../../blocks/board'
 import {BoardView} from '../../blocks/boardView'
-import mutator from '../../mutator'
 import {Utils} from '../../utils'
 import Button from '../../widgets/buttons/button'
 import propsRegistry from '../../properties'
@@ -25,6 +27,7 @@ type Props = {
 }
 
 const FilterComponent = (props: Props): JSX.Element => {
+    const dispatch = useAppDispatch()
     const conditionClicked = (optionId: string, filter: FilterClause): void => {
         const {activeView} = props
 
@@ -37,7 +40,7 @@ const FilterComponent = (props: Props): JSX.Element => {
         Utils.assert(newFilter, `No filter at index ${filterIndex}`)
         if (newFilter.condition !== optionId) {
             newFilter.condition = optionId as FilterCondition
-            mutator.changeViewFilter(board.id, activeView.id, activeView.fields.filter, filterGroup)
+            dispatch(updateViewFilter(filterGroup))
         }
     }
 
@@ -57,7 +60,7 @@ const FilterComponent = (props: Props): JSX.Element => {
         }
         filterGroup.filters.push(filter)
 
-        mutator.changeViewFilter(board.id, activeView.id, activeView.fields.filter, filterGroup)
+        dispatch(updateViewFilter(filterGroup))
     }
 
     const {board, activeView} = props

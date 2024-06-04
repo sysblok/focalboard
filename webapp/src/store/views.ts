@@ -5,6 +5,8 @@ import {createSlice, PayloadAction, createSelector} from '@reduxjs/toolkit'
 import isEqual from 'lodash/isEqual'
 
 import {BoardView, createBoardView} from '../blocks/boardView'
+import {FilterGroup} from '../blocks/filterGroup'
+
 import {Utils} from '../utils'
 
 import {initialReadOnlyLoad, loadBoardData} from './initialLoad'
@@ -75,6 +77,9 @@ const viewsSlice = createSlice({
         updateView: (state, action: PayloadAction<BoardView>) => {
             state.views[action.payload.id] = action.payload
         },
+        updateViewFilter: (state, action: PayloadAction<FilterGroup>) => {
+            state.views[state.current].fields.filter = action.payload
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(initialReadOnlyLoad.fulfilled, (state, action) => {
@@ -96,7 +101,7 @@ const viewsSlice = createSlice({
     },
 })
 
-export const {updateViews, setCurrent, updateView} = viewsSlice.actions
+export const {updateViews, setCurrent, updateView, updateViewFilter} = viewsSlice.actions
 export const {reducer} = viewsSlice
 
 export const getViews = (state: RootState): {[key: string]: BoardView} => state.views.views
