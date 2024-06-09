@@ -3,9 +3,11 @@
 import React from 'react'
 import {FormattedMessage, useIntl} from 'react-intl'
 
+import {useAppDispatch} from '../../store/hooks'
+import {updateViewFilter} from '../../store/views'
+
 import {FilterClause, areEqual as areFilterClausesEqual} from '../../blocks/filterClause'
 import {createFilterGroup, isAFilterGroupInstance} from '../../blocks/filterGroup'
-import mutator from '../../mutator'
 import {OctoUtils} from '../../octoUtils'
 import {Utils} from '../../utils'
 import {Board, IPropertyTemplate} from '../../blocks/board'
@@ -29,6 +31,7 @@ type Props = {
 const FilterEntry = (props: Props): JSX.Element => {
     const {board, view, filter} = props
     const intl = useIntl()
+    const dispatch = useAppDispatch()
 
     const template = board.cardProperties.find((o: IPropertyTemplate) => o.id === filter.propertyId)
     let propertyType = propsRegistry.get(template?.type || 'unknown')
@@ -59,7 +62,7 @@ const FilterEntry = (props: Props): JSX.Element => {
                             if (newFilter.propertyId !== optionId) {
                                 newFilter.propertyId = optionId
                                 newFilter.values = []
-                                mutator.changeViewFilter(props.board.id, view.id, view.fields.filter, filterGroup)
+                                dispatch(updateViewFilter(filterGroup))
                             }
                         }}
                     />
@@ -78,7 +81,7 @@ const FilterEntry = (props: Props): JSX.Element => {
                                     newFilter.propertyId = optionId
                                     newFilter.condition = OctoUtils.filterConditionValidOrDefault(propsRegistry.get(o.type).filterValueType, newFilter.condition)
                                     newFilter.values = []
-                                    mutator.changeViewFilter(props.board.id, view.id, view.fields.filter, filterGroup)
+                                    dispatch(updateViewFilter(filterGroup))
                                 }
                             }}
                         />))}
@@ -231,7 +234,7 @@ const FilterEntry = (props: Props): JSX.Element => {
                 onClick={() => {
                     const filterGroup = createFilterGroup(view.fields.filter)
                     filterGroup.filters = filterGroup.filters.filter((o) => isAFilterGroupInstance(o) || !areFilterClausesEqual(o, filter))
-                    mutator.changeViewFilter(props.board.id, view.id, view.fields.filter, filterGroup)
+                    dispatch(updateViewFilter(filterGroup))
                 }}
             >
                 <FormattedMessage
