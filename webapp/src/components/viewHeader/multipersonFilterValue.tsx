@@ -6,8 +6,10 @@ import {useIntl} from 'react-intl'
 
 import {MultiValue} from 'react-select'
 
+import {useAppDispatch} from '../../store/hooks'
+import {updateViewFilter} from '../../store/views'
+
 import {Utils} from '../../utils'
-import mutator from '../../mutator'
 import {BoardView} from '../../blocks/boardView'
 
 import {FilterClause} from '../../blocks/filterClause'
@@ -26,6 +28,7 @@ type Props = {
 const MultiPersonFilterValue = (props: Props): JSX.Element => {
     const {filter, view} = props
     const intl = useIntl()
+    const dispatch = useAppDispatch()
     const emptyDisplayValue = intl.formatMessage({id: 'ConfirmPerson.search', defaultMessage: 'Search...'})
 
     return (
@@ -52,7 +55,7 @@ const MultiPersonFilterValue = (props: Props): JSX.Element => {
                 } else if (action.action === 'remove-value') {
                     newFilter.values = items.filter((a) => a.id !== action.removedValue.id).map((b) => b.id) || []
                 }
-                mutator.changeViewFilter(view.boardId, view.id, view.fields.filter, filterGroup)
+                dispatch(updateViewFilter(filterGroup))
             }}
         />
     )

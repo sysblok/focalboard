@@ -4,6 +4,9 @@ import React, {useState} from 'react'
 
 import {useIntl} from 'react-intl'
 
+import {useAppDispatch} from '../../store/hooks'
+import {updateViewFilter} from '../../store/views'
+
 import {PropertyType} from '../../properties/types'
 import {IPropertyTemplate} from '../../blocks/board'
 import {FilterClause} from '../../blocks/filterClause'
@@ -32,6 +35,7 @@ const filterValue = (props: Props): JSX.Element|null => {
     const {filter, template, view, propertyType} = props
     const [value, setValue] = useState(filter.values.length > 0 ? filter.values[0] : '')
     const intl = useIntl()
+    const dispatch = useAppDispatch()
 
     if (propertyType.filterValueType === 'none') {
         return null
@@ -60,7 +64,7 @@ const filterValue = (props: Props): JSX.Element|null => {
                     Utils.assert(newFilter, `No filter at index ${filterIndex}`)
 
                     newFilter.values = [value]
-                    mutator.changeViewFilter(view.boardId, view.id, view.fields.filter, filterGroup)
+                    dispatch(updateViewFilter(filterGroup))
                 }}
             />
         )
@@ -118,10 +122,10 @@ const filterValue = (props: Props): JSX.Element|null => {
                             Utils.assert(newFilter, `No filter at index ${filterIndex}`)
                             if (filter.values.includes(o.id)) {
                                 newFilter.values = newFilter.values.filter((id) => id !== optionId)
-                                mutator.changeViewFilter(view.boardId, view.id, view.fields.filter, filterGroup)
+                                dispatch(updateViewFilter(filterGroup))
                             } else {
                                 newFilter.values.push(optionId)
-                                mutator.changeViewFilter(view.boardId, view.id, view.fields.filter, filterGroup)
+                                dispatch(updateViewFilter(filterGroup))
                             }
                         }}
                     />

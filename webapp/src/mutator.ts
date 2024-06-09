@@ -786,6 +786,7 @@ class Mutator {
         )
     }
 
+    // function stopped being used after the commit da1d7877 - filters are saved in store
     async changeViewFilter(boardId: string, viewId: string, oldFilter: FilterGroup, filter: FilterGroup): Promise<void> {
         await undoManager.perform(
             async () => {

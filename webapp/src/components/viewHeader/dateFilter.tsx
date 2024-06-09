@@ -8,7 +8,8 @@ import DayPicker from 'react-day-picker/DayPicker'
 
 import moment from 'moment'
 
-import mutator from '../../mutator'
+import {useAppDispatch} from '../../store/hooks'
+import {updateViewFilter} from '../../store/views'
 
 import Editable from '../../widgets/editable'
 import Button from '../../widgets/buttons/button'
@@ -41,6 +42,7 @@ const loadedLocales: Record<string, moment.Locale> = {}
 function DateFilter(props: Props): JSX.Element {
     const {filter, view} = props
     const [showDialog, setShowDialog] = useState(false)
+    const dispatch = useAppDispatch()
 
     const filterValue = filter.values
 
@@ -68,7 +70,7 @@ function DateFilter(props: Props): JSX.Element {
             if (adjustedValue) {
                 newFilter.values = [adjustedValue.getTime().toString()]
             }
-            mutator.changeViewFilter(view.boardId, view.id, view.fields.filter, filterGroup)
+            dispatch(updateViewFilter(filterGroup))
         }
     }, [value, view.boardId, view.id, view.fields.filter])
 
