@@ -27,6 +27,17 @@ const optionColors = [
     'propColorPink',
     'propColorRed',
 ]
+const labelColorMap = new Map(Object.entries({
+    'black': 'propColorGray',
+    'green': 'propColorGreen',
+    'red': 'propColorRed',
+    'red_light': 'propColorRed',
+    'yellow': 'propColorYellow',
+    'orange': 'propColorOrange',
+    'sky': 'propColorBlue',
+    'purple': 'propColorPurple',
+    'pink': 'propColorPink',
+}))
 let optionColorIndex = 0
 
 export function makeUsername(username: string, fullName: string): string {
@@ -72,7 +83,7 @@ export function convertTrello(input: Trello, memberIdMap: Map<string, string>): 
         console.log(`Label: ${label.name}`)
         const optionId = Utils.createGuid()
         optionLabelIdMap.set(label.id, optionId)
-        const color = optionColors[optionColorIndex % optionColors.length]
+        const color = labelColorMap.get(label.color) || optionColors[optionColorIndex % optionColors.length]
         optionColorIndex += 1
         const option: IPropertyOption = {
             id: optionId,

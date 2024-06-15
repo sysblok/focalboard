@@ -53,6 +53,12 @@ const ScrollingComponent = withScrolling('div')
 const hStrength = createHorizontalStrength(Utils.isMobile() ? 60 : 250)
 const vStrength = createVerticalStrength(Utils.isMobile() ? 60 : 250)
 
+function getRandomPropColor() {
+    const keys = Object.keys(Constants.menuColors).filter((key) => key !== 'propColorDefault')
+    const randomKey = keys[Math.floor(Math.random() * keys.length)]
+    return randomKey
+}
+
 const Kanban = (props: Props) => {
     const cardTemplates: Card[] = useAppSelector(getCurrentBoardTemplates)
     const {board, activeView, cards, groupByProperty, visibleGroups, hiddenGroups, hiddenCardsCount} = props
@@ -87,7 +93,7 @@ const Kanban = (props: Props) => {
         const option: IPropertyOption = {
             id: Utils.createGuid(IDType.BlockID),
             value: 'New group',
-            color: 'propColorDefault',
+            color: getRandomPropColor(),
         }
 
         await mutator.insertPropertyOption(board.id, board.cardProperties, groupByProperty!, option, 'add group')
@@ -177,6 +183,7 @@ const Kanban = (props: Props) => {
             return
         }
         Utils.log(`onDropToCard: ${dstCard.title}`)
+
         // const {selectedCardIds} = props
         const optionId = dstCard.fields.properties[groupByProperty.id]
 
@@ -205,16 +212,20 @@ const Kanban = (props: Props) => {
         await mutator.performAsUndoGroup(async () => {
             // Update properties of dragged cards
             const awaits = []
+
             // for (const draggedCard of draggedCards) {
-                Utils.log(`draggedCard: ${draggedCard.title}, column: ${optionId}`)
-                const oldOptionId = draggedCard.fields.properties[groupByProperty!.id]
-                if (optionId !== oldOptionId) {
-                    awaits.push(mutator.changePropertyValue(props.board.id, draggedCard, groupByProperty!.id, optionId, description))
-                }
+            Utils.log(`draggedCard: ${draggedCard.title}, column: ${optionId}`)
+            const oldOptionId = draggedCard.fields.properties[groupByProperty!.id]
+            if (optionId !== oldOptionId) {
+                awaits.push(mutator.changePropertyValue(props.board.id, draggedCard, groupByProperty!.id, optionId, description))
+            }
+
             // }
             await Promise.all(awaits)
+
             // await mutator.changeViewCardOrder(props.board.id, activeView.id, activeView.fields.cardOrder, cardOrder, description)
         })
+
     // }, [cards, activeView.id, activeView.fields.cardOrder, groupByProperty, props.selectedCardIds])
     }, [activeView.id, groupByProperty, props.board.id])
 
