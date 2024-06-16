@@ -153,6 +153,7 @@ const valueSelectorStyle = {
         width: 'unset',
         background: 'rgb(var(--center-channel-bg-rgb))',
         minWidth: '260px',
+        overflowY: 'scroll',
     }),
 }
 
@@ -162,11 +163,12 @@ function ValueSelector(props: Props): JSX.Element {
         <CreatableSelect
             noOptionsMessage={() => intl.formatMessage({id: 'ValueSelector.noOptions', defaultMessage: 'No options. Start typing to add the first one!'})}
             aria-label={intl.formatMessage({id: 'ValueSelector.valueSelector', defaultMessage: 'Value selector'})}
-            captureMenuScroll={true}
+            captureMenuScroll={false}
             maxMenuHeight={1200}
             isMulti={props.isMulti}
             isClearable={true}
             styles={valueSelectorStyle}
+            menuShouldScrollIntoView={false}
             formatOptionLabel={(option: IPropertyOption, meta: FormatOptionLabelMeta<IPropertyOption>) => (
                 <ValueSelectorLabel
                     option={option}
