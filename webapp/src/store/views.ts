@@ -25,6 +25,9 @@ const smartViewUpdate = (oldView: BoardView, newView: BoardView) => {
         return newView
     }
 
+    // do not use filters from server to avoid unwanted reset to default
+    newView.fields.filter = oldView.fields.filter
+
     if (isEqual(newView.fields.sortOptions, oldView.fields.sortOptions)) {
         newView.fields.sortOptions = oldView.fields.sortOptions
     }
@@ -39,9 +42,6 @@ const smartViewUpdate = (oldView: BoardView, newView: BoardView) => {
     }
     if (isEqual(newView.fields.collapsedOptionIds, oldView.fields.collapsedOptionIds)) {
         newView.fields.collapsedOptionIds = oldView.fields.collapsedOptionIds
-    }
-    if (isEqual(newView.fields.filter, oldView.fields.filter)) {
-        newView.fields.filter = oldView.fields.filter
     }
     if (isEqual(newView.fields.cardOrder, oldView.fields.cardOrder)) {
         newView.fields.cardOrder = oldView.fields.cardOrder
