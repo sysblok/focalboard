@@ -153,6 +153,7 @@ const valueSelectorStyle = {
         width: 'unset',
         background: 'rgb(var(--center-channel-bg-rgb))',
         minWidth: '260px',
+        overflowY: 'scroll',
     }),
 }
 
