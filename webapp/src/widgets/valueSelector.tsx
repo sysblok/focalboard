@@ -167,6 +167,7 @@ function ValueSelector(props: Props): JSX.Element {
             isMulti={props.isMulti}
             isClearable={true}
             styles={valueSelectorStyle}
+            menuShouldScrollIntoView={false}
             formatOptionLabel={(option: IPropertyOption, meta: FormatOptionLabelMeta<IPropertyOption>) => (
                 <ValueSelectorLabel
                     option={option}
