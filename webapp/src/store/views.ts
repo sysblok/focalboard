@@ -25,6 +25,9 @@ const smartViewUpdate = (oldView: BoardView, newView: BoardView) => {
         return newView
     }
 
+    // do not use filters from server to avoid unwanted reset to default
+    newView.fields.filter = oldView.fields.filter
+
     if (isEqual(newView.fields.sortOptions, oldView.fields.sortOptions)) {
         newView.fields.sortOptions = oldView.fields.sortOptions
     }
@@ -39,9 +42,6 @@ const smartViewUpdate = (oldView: BoardView, newView: BoardView) => {
     }
     if (isEqual(newView.fields.collapsedOptionIds, oldView.fields.collapsedOptionIds)) {
         newView.fields.collapsedOptionIds = oldView.fields.collapsedOptionIds
-    }
-    if (isEqual(newView.fields.filter, oldView.fields.filter)) {
-        newView.fields.filter = oldView.fields.filter
     }
     if (isEqual(newView.fields.cardOrder, oldView.fields.cardOrder)) {
         newView.fields.cardOrder = oldView.fields.cardOrder
@@ -86,7 +86,8 @@ const viewsSlice = createSlice({
             state.views = {}
             for (const block of action.payload.blocks) {
                 if (block.type === 'view') {
-                    state.views[block.id] = block as BoardView
+                    // use default filter then initial data load
+                    state.views[block.id] = {...block, fields: {...block.fields, filter: {filters: [], operation: 'and'} as FilterGroup}} as BoardView
                 }
             }
         })
@@ -94,7 +95,8 @@ const viewsSlice = createSlice({
             state.views = {}
             for (const block of action.payload.blocks) {
                 if (block.type === 'view') {
-                    state.views[block.id] = block as BoardView
+                    // use default filter then initial data load
+                    state.views[block.id] = {...block, fields: {...block.fields, filter: {filters: [], operation: 'and'} as FilterGroup}} as BoardView
                 }
             }
         })
