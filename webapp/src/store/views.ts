@@ -86,7 +86,8 @@ const viewsSlice = createSlice({
             state.views = {}
             for (const block of action.payload.blocks) {
                 if (block.type === 'view') {
-                    state.views[block.id] = block as BoardView
+                    // use default filter then initial data load
+                    state.views[block.id] = {...block, fields: {...block.fields, filter: {filters: [], operation: 'and'} as FilterGroup}} as BoardView
                 }
             }
         })
@@ -94,7 +95,8 @@ const viewsSlice = createSlice({
             state.views = {}
             for (const block of action.payload.blocks) {
                 if (block.type === 'view') {
-                    state.views[block.id] = block as BoardView
+                    // use default filter then initial data load
+                    state.views[block.id] = {...block, fields: {...block.fields, filter: {filters: [], operation: 'and'} as FilterGroup}} as BoardView
                 }
             }
         })
