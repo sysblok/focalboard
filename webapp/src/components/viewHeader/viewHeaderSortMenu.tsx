@@ -10,7 +10,8 @@ import {IPropertyTemplate} from '../../blocks/board'
 import {BoardView, ISortOption} from '../../blocks/boardView'
 import {Constants} from '../../constants'
 
-// import {Card} from '../../blocks/card'
+import {Card} from '../../blocks/card'
+
 // import mutator from '../../mutator'
 import Button from '../../widgets/buttons/button'
 import Menu from '../../widgets/menu'
@@ -21,15 +22,15 @@ import SortUpIcon from '../../widgets/icons/sortUp'
 type Props = {
     properties: readonly IPropertyTemplate[]
     activeView: BoardView
-
-    // orderedCards: Card[]
+    orderedCards: Card[]
 }
 const ViewHeaderSortMenu = (props: Props) => {
     const {
         properties,
         activeView,
 
-        // orderedCards
+        // not in use after commit 4906e26
+        orderedCards,
     } = props
     const dispatch = useAppDispatch()
 
