@@ -1,7 +1,7 @@
 @import '../../styles/z-index';
 
 .Kanban {
-    overflow: auto;
+    overflow-y: hidden;
     flex: 1;
 
     .octo-board-header {
@@ -72,6 +72,8 @@
         flex-direction: row;
         flex: 0 1 auto;
         margin-top: 2px;
+        max-height: 100%;
+        gap: 15px;
     }
 
     .octo-board-column {
@@ -80,11 +82,13 @@
         display: flex;
         flex-direction: column;
 
-        height: 100vh;
+        max-height: 100%;
         overflow-y: scroll;
+        scroll-behavior: smooth;
 
         width: 260px;
-        margin-right: 15px;
+        margin: -2px;
+        padding: 2px;
 
         &.narrow {
             width: 220px;
