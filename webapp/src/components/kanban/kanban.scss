@@ -93,6 +93,22 @@
         &.narrow {
             width: 220px;
         }
+
+        scrollbar-width: 10px;
+        scrollbar-color: rgba(63, 67, 80, 0.5);
+
+        &::-webkit-scrollbar {
+            width: 10px;
+            background-color: rgb(255, 255, 255);
+        }
+        &::-webkit-scrollbar-track {
+            background-color: rgb(255, 255, 255);
+        }
+        &::-webkit-scrollbar-thumb {
+            background: rgba(63, 67, 80, 0.5);
+            border: 2px solid rgb(255, 255, 255);
+	        border-radius: 5px;
+        }
     }
 
     .octo-board-hidden-item {
