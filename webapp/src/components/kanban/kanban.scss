@@ -87,8 +87,8 @@
         scroll-behavior: smooth;
 
         width: 260px;
-        margin: -2px;
-        padding: 2px;
+        margin: -2px -2px 16px -2px;
+        padding: 2px 2px 64px 2px;
 
         &.narrow {
             width: 220px;
