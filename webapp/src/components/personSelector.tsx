@@ -150,18 +150,12 @@ const PersonSelector = (props: Props): JSX.Element => {
         const excludeBots = true
         const allUsers = await client.searchTeamUsers(value, excludeBots)
         const usersInsideBoard: IUser[] = []
-        const usersOutsideBoard: IUser[] = []
         for (const u of allUsers) {
             if (boardUsersById[u.id]) {
                 usersInsideBoard.push(u)
-            } else {
-                usersOutsideBoard.push(u)
             }
         }
-        return [
-            {label: intl.formatMessage({id: 'PersonProperty.board-members', defaultMessage: 'Board members'}), options: usersInsideBoard},
-            {label: intl.formatMessage({id: 'PersonProperty.non-board-members', defaultMessage: 'Not board members'}), options: usersOutsideBoard},
-        ]
+        return usersInsideBoard;
     }, [boardUsers, allowAddUsers, boardUsersById, me])
 
     let primaryClass = 'Person'
