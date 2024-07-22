@@ -1,16 +1,21 @@
 ![Focusboard](website/site/static/img/hero.jpg)
 
-Focalboard is an open source, multilingual, self-hosted project management tool that's an alternative to Trello, Notion, and Asana.
+Focusboard is an open source, multilingual, self-hosted project management tool that's an alternative to Trello, Notion, and Asana.
 
-It helps define, organize, track and manage work across individuals and teams. Focalboard comes in three editions:
+It helps define, organize, track and manage work across individuals and teams.
 
 * Get the Focusboard plugin from here**(https://github.com/mattermost/focalboard/releases)**
+
+Here are the two editiion of Focusboard
 
 * **[Personal Desktop](https://www.focalboard.com/docs/personal-edition/desktop/)**: A standalone, single-user [macOS](https://apps.apple.com/app/apple-store/id1556908618?pt=2114704&ct=website&mt=8), [Windows](https://www.microsoft.com/store/apps/9NLN2T0SX9VF?cid=website), or [Linux](https://www.focalboard.com/download/personal-edition/desktop/#linux-desktop) desktop app for your own todos and personal projects.
 
 * **[Personal Server](https://www.focalboard.com/download/personal-edition/ubuntu/)**: A standalone, multi-user server for development and personal use.
 
-## Try Focalboard
+## Try Focusboard
+
+### Remember This is just a fork of "Focalboard" which just started, Also I'm all alone so it need some time to build all those things and release stable version.
+### Below! all the docs are from Mattermost, the original project maintainer. This docs are still valid.
 
 ### Mattermost Plugin
 
