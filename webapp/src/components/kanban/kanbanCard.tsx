@@ -137,21 +137,24 @@ const KanbanCard = (props: Props) => {
                         {card.title || intl.formatMessage({id: 'KanbanCard.untitled', defaultMessage: 'Untitled'})}
                     </div>
                 </div>
-                {visiblePropertyTemplates.map((template) => (
-                    <Tooltip
-                        key={template.id}
-                        title={template.name}
-                    >
-                        <span className="octo-propertylabel">{`${template.name}`}</span>
-                        <PropertyValueElement
-                            board={board}
-                            readOnly={true}
-                            card={card}
-                            propertyTemplate={template}
-                            showEmptyPlaceholder={false}
-                        />
-                    </Tooltip>
-                ))}
+                {visiblePropertyTemplates.map((template) => {
+                    const condition = card.fields.properties[template.id] && (template.name == 'Автор' || template.name == 'Иллюстратор' || template.name == 'Редактор');
+                    return (
+                        <Tooltip
+                            key={template.id}
+                            title={template.name}
+                        >
+                            {condition && <span className="octo-propertylabel">{`${template.name}`}</span> }
+                            <PropertyValueElement
+                                board={board}
+                                readOnly={true}
+                                card={card}
+                                propertyTemplate={template}
+                                showEmptyPlaceholder={false}
+                            />
+                        </Tooltip>
+                    )
+                })}
                 {props.visibleBadges && <CardBadges card={card}/>}
                 {showOnboarding && !match.params.cardId && <OpenCardTourStep/>}
                 {showOnboarding && !match.params.cardId && <CopyLinkTourStep/>}
