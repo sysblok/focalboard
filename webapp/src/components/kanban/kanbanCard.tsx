@@ -142,6 +142,7 @@ const KanbanCard = (props: Props) => {
                         key={template.id}
                         title={template.name}
                     >
+                        <span className="octo-propertylabel">{`${template.name}`}</span>
                         <PropertyValueElement
                             board={board}
                             readOnly={true}
