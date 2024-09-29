@@ -274,7 +274,7 @@ func (s *SQLStore) getUsersByTeam(db sq.BaseRunner, _ string, _ string, _, _ boo
 }
 
 func (s *SQLStore) searchUsersByTeam(db sq.BaseRunner, _ string, searchQuery string, _ string, _, _, _ bool) ([]*model.User, error) {
-	users, err := s.getUsersByCondition(db, &sq.Like{"username": "%" + searchQuery + "%"}, 0)
+	users, err := s.getUsersByCondition(db, &sq.ILike{"username": "%" + searchQuery + "%"}, 0)
 	if model.IsErrNotFound(err) {
 		return []*model.User{}, nil
 	}
