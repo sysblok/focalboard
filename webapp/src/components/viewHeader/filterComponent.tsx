@@ -1,6 +1,6 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
-import React from 'react'
+import React, {useEffect} from 'react'
 import {FormattedMessage} from 'react-intl'
 
 import {useAppDispatch} from '../../store/hooks'
@@ -63,9 +63,35 @@ const FilterComponent = (props: Props): JSX.Element => {
         dispatch(updateViewFilter(filterGroup))
     }
 
+    const addAllFilters = () => {
+        const {board, activeView} = props
+
+        const allFilters = activeView.fields.filter?.filters.filter((o) => !isAFilterGroupInstance(o)) as FilterClause[] || []
+        const filterGroup = createFilterGroup(activeView.fields.filter)
+
+        board.cardProperties
+            .filter((o: IPropertyTemplate) => !allFilters.find((f) => f.propertyId === o.id))
+            .forEach((o: IPropertyTemplate) => {
+                if (propsRegistry.get(o.type).canFilter) {
+                    const filter = createFilterClause()
+                    filter.propertyId = o.id
+                    filterGroup.filters.push(filter)
+                }
+            })
+
+        dispatch(updateViewFilter(filterGroup))
+    }
+
     const {board, activeView} = props
 
     const filters: FilterClause[] = activeView.fields.filter?.filters.filter((o) => !isAFilterGroupInstance(o)) as FilterClause[] || []
+
+    // render all possible filters by default but only at first render
+    useEffect(() => {
+        if (filters.length === 0) {
+            addAllFilters()
+        }
+    }, [])
 
     return (
         <Modal
