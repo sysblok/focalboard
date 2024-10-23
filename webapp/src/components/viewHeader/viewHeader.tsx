@@ -8,6 +8,9 @@ import mutator from '../../mutator'
 import {Board, IPropertyTemplate} from '../../blocks/board'
 import {BoardView} from '../../blocks/boardView'
 import {Card} from '../../blocks/card'
+import {isAFilterGroupInstance, createFilterGroup} from '../../blocks/filterGroup'
+import {FilterClause, createFilterClause} from '../../blocks/filterClause'
+import propsRegistry from '../../properties'
 import Button from '../../widgets/buttons/button'
 import IconButton from '../../widgets/buttons/iconButton'
 import DropdownIcon from '../../widgets/icons/dropdown'
@@ -16,7 +19,7 @@ import Editable from '../../widgets/editable'
 
 import ModalWrapper from '../modalWrapper'
 
-import {useAppSelector} from '../../store/hooks'
+import {useAppDispatch, useAppSelector} from '../../store/hooks'
 import {Permission} from '../../constants'
 import {useHasCurrentBoardPermissions} from '../../hooks/permissions'
 import {
@@ -35,6 +38,7 @@ import {getCurrentCard} from '../../store/cards'
 import BoardPermissionGate from '../permissions/boardPermissionGate'
 
 import {getLimits} from '../../store/limits'
+import {updateViewFilter} from '../../store/views'
 import {LimitUnlimited} from '../../boardCloudLimits'
 import ViewLimitModalWrapper from '../viewLImitDialog/viewLimitDialogWrapper'
 
@@ -67,6 +71,7 @@ const ViewHeader = (props: Props) => {
     const [showFilter, setShowFilter] = useState(false)
     const [lockFilterOnClose, setLockFilterOnClose] = useState(false)
     const intl = useIntl()
+    const dispatch = useAppDispatch()
     const canEditBoardProperties = useHasCurrentBoardPermissions([Permission.ManageBoardProperties])
 
     const {board, activeView, views, groupByProperty, cards, dateDisplayProperty} = props
@@ -130,6 +135,28 @@ const ViewHeader = (props: Props) => {
         setShowViewLimitDialog(true)
         return false
     }
+
+    // add all possible filters in current view
+    const addAllFilters = () => {
+        const allFilters = activeView.fields.filter?.filters.filter((o) => !isAFilterGroupInstance(o)) as FilterClause[] || []
+        const filterGroup = createFilterGroup(activeView.fields.filter)
+
+        board.cardProperties
+            .filter((o: IPropertyTemplate) => !allFilters.find((f) => f.propertyId === o.id))
+            .forEach((o: IPropertyTemplate) => {
+                if (propsRegistry.get(o.type).canFilter) {
+                    const filter = createFilterClause()
+                    filter.propertyId = o.id
+                    filterGroup.filters.push(filter)
+                }
+            })
+
+        dispatch(updateViewFilter(filterGroup))
+    }
+
+    useEffect(() => {
+        addAllFilters()
+    }, [])
 
     return (
         <div className='ViewHeader'>
