@@ -8,7 +8,6 @@ import {useDrop, useDrag} from 'react-dnd'
 import {Constants, Permission} from '../../constants'
 import {IPropertyOption, IPropertyTemplate, Board, BoardGroup} from '../../blocks/board'
 import {BoardView} from '../../blocks/boardView'
-import {Card} from '../../blocks/card'
 import mutator from '../../mutator'
 import IconButton from '../../widgets/buttons/iconButton'
 import AddIcon from '../../widgets/icons/add'
@@ -34,7 +33,7 @@ type Props = {
     readonly: boolean
     addCard: (groupByOptionId?: string, show?: boolean) => Promise<void>
     propertyNameChanged: (option: IPropertyOption, text: string) => Promise<void>
-    onDropToColumn: (srcOption: IPropertyOption, card?: Card, dstOption?: IPropertyOption) => void
+    onDropToColumn: (srcOption: IPropertyOption, dstOption?: IPropertyOption) => void
     calculationMenuOpen: boolean
     onCalculationMenuOpen: () => void
     onCalculationMenuClose: () => void
@@ -66,7 +65,7 @@ export default function KanbanColumnHeader(props: Props): JSX.Element {
             isOver: monitor.isOver(),
         }),
         drop: (item: IPropertyOption) => {
-            props.onDropToColumn(item, undefined, group.option)
+            props.onDropToColumn(item, group.option)
         },
     }), [props.onDropToColumn])
 
