@@ -3,7 +3,7 @@
 /* eslint-disable max-lines */
 import React, {useState, useEffect, useRef} from 'react'
 import {FormattedMessage, IntlShape} from 'react-intl'
-import {useDrop, useDrag} from 'react-dnd'
+import {useDrop, useDrag, DropTargetMonitor} from 'react-dnd'
 
 import {Constants, Permission} from '../../constants'
 import {IPropertyOption, IPropertyTemplate, Board, BoardGroup} from '../../blocks/board'
@@ -33,7 +33,7 @@ type Props = {
     readonly: boolean
     addCard: (groupByOptionId?: string, show?: boolean) => Promise<void>
     propertyNameChanged: (option: IPropertyOption, text: string) => Promise<void>
-    onDropToColumn: (srcOption: IPropertyOption, dstOption?: IPropertyOption) => void
+    moveColumn: (option: IPropertyOption, dstOption: IPropertyOption, monitor: DropTargetMonitor, ref: React.RefObject<HTMLDivElement>) => void
     calculationMenuOpen: boolean
     onCalculationMenuOpen: () => void
     onCalculationMenuClose: () => void
@@ -64,10 +64,13 @@ export default function KanbanColumnHeader(props: Props): JSX.Element {
         collect: (monitor) => ({
             isOver: monitor.isOver(),
         }),
-        drop: (item: IPropertyOption) => {
-            props.onDropToColumn(item, group.option)
+        hover(item: IPropertyOption, monitor){
+            if (!headerRef.current) {
+                return
+            }
+            props.moveColumn(item, group.option, monitor, headerRef)
         },
-    }), [props.onDropToColumn])
+    }), [props.moveColumn])
 
     useEffect(() => {
         setGroupTitle(group.option.value)

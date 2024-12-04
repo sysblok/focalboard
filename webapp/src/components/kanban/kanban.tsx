@@ -30,6 +30,7 @@ import KanbanColumnHeader from './kanbanColumnHeader'
 import KanbanHiddenColumnItem from './kanbanHiddenColumnItem'
 
 import './kanban.scss'
+import {DropTargetMonitor, XYCoord} from 'react-dnd'
 
 type Props = {
     board: Board
@@ -171,37 +172,40 @@ const Kanban = (props: Props) => {
         }
     }, [cards, visibleGroups, activeView.id, activeView.fields.cardOrder, groupByProperty, props.selectedCardIds])
 
-    const moveColumn = useCallback(async (option: IPropertyOption, dstOption?: IPropertyOption, isColumnNew?: boolean) => {
-        if (dstOption) {
-            Utils.log(`ondrop. Header option: ${dstOption.value}, column: ${option?.value}`)
+    const moveColumn = useCallback(async (option: IPropertyOption, dstOption: IPropertyOption, monitor: DropTargetMonitor, ref: React.RefObject<HTMLDivElement>) => {
 
-            const visibleOptionIds = visibleGroups.map((o) => o.option.id)
+        const visibleOptionIds = visibleGroups.map((o) => o.option.id)
+        const dragIndex = visibleOptionIds.indexOf(option.id)
+        const hoverIndex = visibleOptionIds.indexOf(dstOption.id)
 
-            // Ugly hack to add the new column to the left
-            // visibleGroups aren't updated in component yet, so add id of new column manually
-            if (isColumnNew) {
-                visibleOptionIds.push(dstOption.id)
-            }
-            const srcBlockX = visibleOptionIds.indexOf(option.id)
-            const dstBlockX = visibleOptionIds.indexOf(dstOption.id)
+        if (dragIndex === hoverIndex) {
+            return
+          }
+        // Determine middle of hovered element
+        const hoverBoundingRect = ref.current!.getBoundingClientRect()
+        const hoverMiddleX = (hoverBoundingRect.right - hoverBoundingRect.left) / 2
 
-            // Here aboveRow means to the left while belowRow means to the right
-            const moveTo = (srcBlockX > dstBlockX ? 'aboveRow' : 'belowRow') as Position
+        // Determine mouse position and get pixels to the left
+        const clientOffset = monitor.getClientOffset()
+        const hoverClientX = (clientOffset as XYCoord).x - hoverBoundingRect.left
 
-            const visibleOptionIdsRearranged = dragAndDropRearrange({
-                contentOrder: visibleOptionIds,
-                srcBlockX,
-                srcBlockY: -1,
-                dstBlockX,
-                dstBlockY: -1,
-                srcBlockId: option.id,
-                dstBlockId: dstOption.id,
-                moveTo,
-            }) as string[]
-
-            await mutator.changeViewVisibleOptionIds(props.board.id, activeView.id, activeView.fields.visibleOptionIds, visibleOptionIdsRearranged)
+        // Only perform the move when the mouse has crossed half of the items width
+        // Dragging right
+        if (dragIndex < hoverIndex && hoverClientX < hoverMiddleX) {
+            return
         }
-     }, [visibleGroups, activeView.id])
+        // Dragging left
+        if (dragIndex > hoverIndex && hoverClientX > hoverMiddleX) {
+            return
+        }
+
+        // Reorder the column headers
+        const newContentOrder: Array<string | string[]> = [...visibleOptionIds];
+        [newContentOrder[dragIndex], newContentOrder[hoverIndex]] = [newContentOrder[hoverIndex], newContentOrder[dragIndex]];
+
+        await mutator.changeViewVisibleOptionIds(props.board.id, activeView.id, activeView.fields.visibleOptionIds, newContentOrder as string[])
+
+    }, [visibleGroups, activeView.id])
 
     const onDropToCard = useCallback(async (srcCard: Card, dstCard: Card) => {
 
@@ -305,7 +309,7 @@ const Kanban = (props: Props) => {
                         addCard={props.addCard}
                         readonly={props.readonly}
                         propertyNameChanged={propertyNameChanged}
-                        onDropToColumn={moveColumn}
+                        moveColumn={moveColumn}
                         calculationMenuOpen={showCalculationsMenu.get(group.option.id) || false}
                         onCalculationMenuOpen={() => toggleOptions(group.option.id, true)}
                         onCalculationMenuClose={() => toggleOptions(group.option.id, false)}
