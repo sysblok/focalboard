@@ -345,7 +345,8 @@ const Kanban = (props: Props) => {
                 {visibleGroups.map((group) => (
                     <KanbanColumn
                         key={group.option.id || 'empty'}
-                        onDrop={(card: Card) => onDropCardToColumn(group.option, card)}
+                        onDropCard={(card: Card) => onDropCardToColumn(group.option, card)}
+                        onDropHeader={(option, monitor, ref) => moveColumn(option, group.option, monitor, ref)}
                     >
                         {group.cards.map((card) => (
                             <KanbanCard
@@ -394,7 +395,7 @@ const Kanban = (props: Props) => {
                                 activeView={activeView}
                                 intl={props.intl}
                                 readonly={props.readonly}
-                                onDrop={(card: Card) => onDropToColumn(group.option, card)}
+                                onDrop={(card: Card) => onDropCardToColumn(group.option, card)}
                             />
                         ))}
                         {hiddenCardsCount > 0 &&

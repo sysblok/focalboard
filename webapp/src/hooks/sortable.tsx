@@ -13,7 +13,7 @@ interface ISortableWithGripItem {
 function useSortableBase<T>(itemType: string, item: T, enabled: boolean, handler: (src: T, st: T) => void): [boolean, boolean, DragElementWrapper<DragSourceOptions>, DragElementWrapper<DragSourceOptions>, DragElementWrapper<DragPreviewOptions>] {
     const [{isDragging}, drag, preview] = useDrag(() => ({
         type: itemType,
-        item,
+        item: {content: item, type: itemType},
         collect: (monitor) => ({
             isDragging: monitor.isDragging(),
         }),
@@ -24,8 +24,8 @@ function useSortableBase<T>(itemType: string, item: T, enabled: boolean, handler
         collect: (monitor) => ({
             isOver: monitor.isOver(),
         }),
-        drop: (dragItem: T) => {
-            handler(dragItem, item)
+        drop: (dragItem: { content: T; type: string }) => {
+            handler(dragItem.content, item)
         },
         canDrop: () => enabled,
     }), [item, handler, enabled])
