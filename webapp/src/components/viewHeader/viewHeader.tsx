@@ -155,8 +155,10 @@ const ViewHeader = (props: Props) => {
     }
 
     useEffect(() => {
-        addAllFilters()
-    }, [])
+        if (canEditBoardProperties) {
+            addAllFilters()
+        }
+    }, [canEditBoardProperties])
 
     return (
         <div className='ViewHeader'>
