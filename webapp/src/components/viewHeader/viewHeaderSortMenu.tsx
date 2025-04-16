@@ -9,10 +9,8 @@ import {updateViewSort} from '../../store/views'
 import {IPropertyTemplate} from '../../blocks/board'
 import {BoardView, ISortOption} from '../../blocks/boardView'
 import {Constants} from '../../constants'
-
 import {Card} from '../../blocks/card'
-
-// import mutator from '../../mutator'
+import mutator from '../../mutator'
 import Button from '../../widgets/buttons/button'
 import Menu from '../../widgets/menu'
 import MenuWrapper from '../../widgets/menuWrapper'
@@ -25,13 +23,7 @@ type Props = {
     orderedCards: Card[]
 }
 const ViewHeaderSortMenu = (props: Props) => {
-    const {
-        properties,
-        activeView,
-
-        // not in use after commit 4906e26
-        orderedCards,
-    } = props
+    const {properties, activeView, orderedCards} = props
     const dispatch = useAppDispatch()
 
     const hasSort = activeView.fields.sortOptions?.length > 0
@@ -53,14 +45,14 @@ const ViewHeaderSortMenu = (props: Props) => {
         dispatch(updateViewSort(newSortOptions))
     }, [activeView.id, activeView.fields.sortOptions])
 
-    // const onManualSort = useCallback(() => {
-    //     // This sets the manual card order to the currently displayed order
-    //     // Note: Perform this as a single update to change both properties correctly
-    //     const newView = {...activeView, fields: {...activeView.fields}}
-    //     newView.fields.cardOrder = orderedCards.map((o) => o.id || '') || []
-    //     newView.fields.sortOptions = []
-    //     mutator.updateBlock(activeView.boardId, newView, activeView, 'reorder')
-    // }, [activeView, orderedCards])
+    const onManualSort = useCallback(() => {
+        // This sets the manual card order to the currently displayed order
+        // Note: Perform this as a single update to change both properties correctly
+        const newView = {...activeView, fields: {...activeView.fields}}
+        newView.fields.cardOrder = orderedCards.map((o) => o.id || '') || []
+        newView.fields.sortOptions = []
+        mutator.updateBlock(activeView.boardId, newView, activeView, 'reorder')
+    }, [activeView, orderedCards])
 
     const onRevertSort = useCallback(() => {
         dispatch(updateViewSort([]))
@@ -77,12 +69,11 @@ const ViewHeaderSortMenu = (props: Props) => {
             <Menu>
                 {(activeView.fields.sortOptions?.length > 0) &&
                 <>
-                    {/* Out of use because user scenario is not clear */}
-                    {/* <Menu.Text
+                    <Menu.Text
                         id='manual'
                         name='Manual'
                         onClick={onManualSort}
-                    /> */}
+                    />
 
                     <Menu.Text
                         id='revert'
