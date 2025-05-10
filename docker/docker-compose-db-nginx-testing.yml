@@ -5,7 +5,6 @@ services:
     build:
       context: ../
       dockerfile: docker/Dockerfile
-    container_name: focalboard
     depends_on:
       - focalboard-db
     expose:
@@ -25,7 +24,6 @@ services:
 
   proxy:
     image: nginx:latest
-    container_name: focalboard-nginx-testing
     restart: always
     ports:
       - "8443:8443"
@@ -36,7 +34,6 @@ services:
 
   focalboard-db:
     image: postgres:latest
-    container_name: focalboard-postgres
     restart: always
     volumes:
       - pgdata:/var/lib/postgresql/data
