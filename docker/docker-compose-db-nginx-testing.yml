@@ -8,12 +8,12 @@ services:
     depends_on:
       - focalboard-db
     expose:
-      - 8000
+      - 8001
     environment:
       - VIRTUAL_HOST=${FOCALBOARD_HOST}
       - LETSENCRYPT_HOST=${FOCALBOARD_HOST}
       - FOCALBOARD_ENVIRONMENT=${FOCALBOARD_ENVIRONMENT:-dev}
-      - VIRTUAL_PORT=8000
+      - VIRTUAL_PORT=8001
       - VIRTUAL_PROTO=http
     volumes:
       - "./config.json:/opt/focalboard/config.json"
