@@ -29,6 +29,7 @@ services:
       - "8443:8443"
     volumes:
       - ./nginx-testing.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./client_max_body_size.conf:/etc/nginx/conf.d/client_max_body_size.conf:ro
     networks:
       - default
     depends_on:
