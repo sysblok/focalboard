@@ -29,6 +29,8 @@ services:
       - "8443:8443"
     volumes:
       - ./nginx-testing.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - default
     depends_on:
       - app
 
