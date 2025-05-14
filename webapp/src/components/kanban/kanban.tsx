@@ -112,6 +112,21 @@ const Kanban = (props: Props) => {
         await insertGroupAtIndex(option, 0)
     }, [board.id, board.cardProperties, groupByProperty, insertGroupAtIndex])
 
+    const addGroupAfter = useCallback(async (afterOptionId: string) => {
+        const option: IPropertyOption = {
+            id: Utils.createGuid(IDType.BlockID),
+            value: 'New group',
+            color: getRandomPropColor(),
+        }
+
+        await mutator.insertPropertyOption(board.id, board.cardProperties, groupByProperty!, option, 'add group')
+
+        const visibleOptionIds = visibleGroups.map((o) => o.option.id)
+        const insertIndex = visibleOptionIds.indexOf(afterOptionId) + 1
+
+        await insertGroupAtIndex(option, insertIndex)
+    }, [board.id, board.cardProperties, groupByProperty, visibleGroups])
+
     const orderAfterMoveToColumn = useCallback((cardIds: string[], columnId?: string): string[] => {
         let cardOrder = activeView.fields.cardOrder.slice()
         const columnGroup = visibleGroups.find((g) => g.option.id === columnId)
@@ -293,6 +308,7 @@ const Kanban = (props: Props) => {
                         readonly={props.readonly}
                         propertyNameChanged={propertyNameChanged}
                         moveColumn={moveColumn}
+                        addGroupAfter={addGroupAfter}
                         calculationMenuOpen={showCalculationsMenu.get(group.option.id) || false}
                         onCalculationMenuOpen={() => toggleOptions(group.option.id, true)}
                         onCalculationMenuClose={() => toggleOptions(group.option.id, false)}

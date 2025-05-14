@@ -13,6 +13,7 @@
   "AttachmentElement.download": "Download",
   "AttachmentElement.upload-percentage": "Uploading...({uploadPercent}%)",
   "BoardComponent.add-a-group": "+ Add a group",
+  "BoardComponent.add-a-card": "+ Add a card",
   "BoardComponent.delete": "Delete",
   "BoardComponent.hidden-columns": "Hidden columns",
   "BoardComponent.hide": "Hide",

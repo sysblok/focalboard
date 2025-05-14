@@ -11,6 +11,8 @@ import {BoardView} from '../../blocks/boardView'
 import mutator from '../../mutator'
 import IconButton from '../../widgets/buttons/iconButton'
 import AddIcon from '../../widgets/icons/add'
+import BoardIcon from '../../widgets/icons/board'
+import CardIcon from '../../widgets/icons/card'
 import DeleteIcon from '../../widgets/icons/delete'
 import HideIcon from '../../widgets/icons/hide'
 import OptionsIcon from '../../widgets/icons/options'
@@ -34,6 +36,7 @@ type Props = {
     addCard: (groupByOptionId?: string, show?: boolean) => Promise<void>
     propertyNameChanged: (option: IPropertyOption, text: string) => Promise<void>
     moveColumn: (option: IPropertyOption, dstOption: IPropertyOption, monitor: DropTargetMonitor, ref: React.RefObject<HTMLDivElement>) => void
+    addGroupAfter: (afterOptionId: string) => void
     calculationMenuOpen: boolean
     onCalculationMenuOpen: () => void
     onCalculationMenuClose: () => void
@@ -195,12 +198,25 @@ export default function KanbanColumnHeader(props: Props): JSX.Element {
                         </MenuWrapper>
                     </BoardPermissionGate>
                     <BoardPermissionGate permissions={[Permission.ManageBoardCards]}>
-                        <IconButton
-                            icon={<AddIcon/>}
-                            onClick={() => {
-                                props.addCard(group.option.id, true)
-                            }}
-                        />
+                        <MenuWrapper>
+                            <IconButton
+                                icon={<AddIcon/>}
+                            />
+                            <Menu>
+                                <Menu.Text
+                                    id='add_card'
+                                    icon={<CardIcon/>}
+                                    name={intl.formatMessage({id: 'BoardComponent.add-a-card', defaultMessage: 'Add a card'})}
+                                    onClick={() => {props.addCard(group.option.id, true)}}
+                                />
+                                <Menu.Text
+                                    id='add_column'
+                                    icon={<BoardIcon/>}
+                                    name={intl.formatMessage({id: 'BoardComponent.add-a-group', defaultMessage: 'Add a group'})}
+                                    onClick={() => {props.addGroupAfter(group.option.id)}}
+                                />
+                            </Menu>
+                        </MenuWrapper>
                     </BoardPermissionGate>
                 </>
             }
