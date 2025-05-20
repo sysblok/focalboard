@@ -100,18 +100,6 @@ const Kanban = (props: Props) => {
         )
     }, [visibleGroups, board.id, activeView.id])
 
-    const addGroupAsFirst = useCallback(async () => {
-        const option: IPropertyOption = {
-            id: Utils.createGuid(IDType.BlockID),
-            value: 'New group',
-            color: getRandomPropColor(),
-        }
-
-        await mutator.insertPropertyOption(board.id, board.cardProperties, groupByProperty!, option, 'add group')
-
-        await insertGroupAtIndex(option, 0)
-    }, [board.id, board.cardProperties, groupByProperty, insertGroupAtIndex])
-
     const addGroupAfter = useCallback(async (afterOptionId: string) => {
         const option: IPropertyOption = {
             id: Utils.createGuid(IDType.BlockID),
@@ -123,6 +111,21 @@ const Kanban = (props: Props) => {
 
         const visibleOptionIds = visibleGroups.map((o) => o.option.id)
         const insertIndex = visibleOptionIds.indexOf(afterOptionId) + 1
+
+        await insertGroupAtIndex(option, insertIndex)
+    }, [board.id, board.cardProperties, groupByProperty, visibleGroups])
+
+    const addGroupBefore = useCallback(async (beforeOptionId: string) => {
+        const option: IPropertyOption = {
+            id: Utils.createGuid(IDType.BlockID),
+            value: 'New group',
+            color: getRandomPropColor(),
+        }
+
+        await mutator.insertPropertyOption(board.id, board.cardProperties, groupByProperty!, option, 'add group')
+
+        const visibleOptionIds = visibleGroups.map((o) => o.option.id)
+        const insertIndex = Math.max(0, visibleOptionIds.indexOf(beforeOptionId) - 1)
 
         await insertGroupAtIndex(option, insertIndex)
     }, [board.id, board.cardProperties, groupByProperty, visibleGroups])
@@ -279,22 +282,6 @@ const Kanban = (props: Props) => {
                 className='octo-board-header'
                 id='mainBoardHeader'
             >
-                {/* Add column button */}
-                {!props.readonly &&
-                    <BoardPermissionGate permissions={[Permission.ManageBoardProperties]}>
-                        <div className='octo-board-header-cell narrow'>
-                            <Button
-                                onClick={addGroupAsFirst}
-                            >
-                                <FormattedMessage
-                                    id='BoardComponent.add-a-group'
-                                    defaultMessage='+ Add a group'
-                                />
-                            </Button>
-                        </div>
-                    </BoardPermissionGate>
-                }
-
                 {/* Column headers */}
                 {visibleGroups.map((group) => (
                     <KanbanColumnHeader
@@ -308,6 +295,7 @@ const Kanban = (props: Props) => {
                         readonly={props.readonly}
                         propertyNameChanged={propertyNameChanged}
                         moveColumn={moveColumn}
+                        addGroupBefore={addGroupBefore}
                         addGroupAfter={addGroupAfter}
                         calculationMenuOpen={showCalculationsMenu.get(group.option.id) || false}
                         onCalculationMenuOpen={() => toggleOptions(group.option.id, true)}
@@ -333,12 +321,6 @@ const Kanban = (props: Props) => {
                 className='octo-board-body'
                 id='mainBoardBody'
             >
-                {/* Empty column under Add Group Button */}
-                {!props.readonly &&
-                    <BoardPermissionGate permissions={[Permission.ManageBoardProperties]}>
-                        <div className='octo-board-column narrow'/>
-                    </BoardPermissionGate>
-                }
                 {/* Columns */}
 
                 {visibleGroups.map((group) => (

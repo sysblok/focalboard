@@ -11,7 +11,6 @@ import {BoardView} from '../../blocks/boardView'
 import mutator from '../../mutator'
 import IconButton from '../../widgets/buttons/iconButton'
 import AddIcon from '../../widgets/icons/add'
-import BoardIcon from '../../widgets/icons/board'
 import CardIcon from '../../widgets/icons/card'
 import DeleteIcon from '../../widgets/icons/delete'
 import HideIcon from '../../widgets/icons/hide'
@@ -36,6 +35,7 @@ type Props = {
     addCard: (groupByOptionId?: string, show?: boolean) => Promise<void>
     propertyNameChanged: (option: IPropertyOption, text: string) => Promise<void>
     moveColumn: (option: IPropertyOption, dstOption: IPropertyOption, monitor: DropTargetMonitor, ref: React.RefObject<HTMLDivElement>) => void
+    addGroupBefore: (afterOptionId: string) => void
     addGroupAfter: (afterOptionId: string) => void
     calculationMenuOpen: boolean
     onCalculationMenuOpen: () => void
@@ -210,9 +210,15 @@ export default function KanbanColumnHeader(props: Props): JSX.Element {
                                     onClick={() => {props.addCard(group.option.id, true)}}
                                 />
                                 <Menu.Text
-                                    id='add_column'
-                                    icon={<BoardIcon/>}
-                                    name={intl.formatMessage({id: 'BoardComponent.add-a-group', defaultMessage: 'Add a group'})}
+                                    id='add_column_left'
+                                    icon={<AddIcon/>}
+                                    name={intl.formatMessage({id: 'BoardComponent.add-group-left', defaultMessage: 'Add a group to the left'})}
+                                    onClick={() => {props.addGroupBefore(group.option.id)}}
+                                />
+                                <Menu.Text
+                                    id='add_column_right'
+                                    icon={<AddIcon/>}
+                                    name={intl.formatMessage({id: 'BoardComponent.add-group-right', defaultMessage: 'Add a group to the right'})}
                                     onClick={() => {props.addGroupAfter(group.option.id)}}
                                 />
                             </Menu>
