@@ -16,8 +16,6 @@ import {Utils, IDType} from '../../utils'
 import Button from '../../widgets/buttons/button'
 import {Constants, Permission} from '../../constants'
 
-import {dragAndDropRearrange} from '../cardDetail/cardDetailContentsUtility'
-
 import {getCurrentBoardTemplates} from '../../store/cards'
 import BoardPermissionGate from '../permissions/boardPermissionGate'
 import HiddenCardCount from '../../components/hiddenCardCount/hiddenCardCount'
@@ -86,9 +84,23 @@ const Kanban = (props: Props) => {
         await mutator.changePropertyOptionValue(board.id, board.cardProperties, groupByProperty!, option, text)
     }, [board, groupByProperty])
 
-    const addGroupClicked = useCallback(async () => {
-        Utils.log('onAddGroupClicked')
+    const insertGroupAtIndex = useCallback(async (newGroup: IPropertyOption, insertIndex: number) => {
+        const visibleOptionIds = visibleGroups.map((o) => o.option.id)
 
+        // Remove the group if it already exists
+        const filteredIds = visibleOptionIds.filter(id => id !== newGroup.id)
+
+        filteredIds.splice(insertIndex, 0, newGroup.id)
+
+        await mutator.changeViewVisibleOptionIds(
+            board.id,
+            activeView.id,
+            activeView.fields.visibleOptionIds,
+            filteredIds
+        )
+    }, [visibleGroups, board.id, activeView.id])
+
+    const addGroupAfter = useCallback(async (afterOptionId: string) => {
         const option: IPropertyOption = {
             id: Utils.createGuid(IDType.BlockID),
             value: 'New group',
@@ -97,29 +109,26 @@ const Kanban = (props: Props) => {
 
         await mutator.insertPropertyOption(board.id, board.cardProperties, groupByProperty!, option, 'add group')
 
-        // Ugly hack to add the new column to the left
-        // Simulate moving it to the place of current first column
+        const visibleOptionIds = visibleGroups.map((o) => o.option.id)
+        const insertIndex = visibleOptionIds.indexOf(afterOptionId) + 1
+
+        await insertGroupAtIndex(option, insertIndex)
+    }, [board.id, board.cardProperties, groupByProperty, visibleGroups])
+
+    const addGroupBefore = useCallback(async (beforeOptionId: string) => {
+        const option: IPropertyOption = {
+            id: Utils.createGuid(IDType.BlockID),
+            value: 'New group',
+            color: getRandomPropColor(),
+        }
+
+        await mutator.insertPropertyOption(board.id, board.cardProperties, groupByProperty!, option, 'add group')
 
         const visibleOptionIds = visibleGroups.map((o) => o.option.id)
-        visibleOptionIds.push(visibleGroups[0].option.id)
+        const insertIndex = Math.max(0, visibleOptionIds.indexOf(beforeOptionId) - 1)
 
-        const srcBlockX = visibleOptionIds.indexOf(option.id)
-        const dstBlockX = visibleOptionIds.indexOf(visibleGroups[0].option.id)
-
-        const visibleOptionIdsRearranged = dragAndDropRearrange({
-            contentOrder: visibleOptionIds,
-            srcBlockX,
-            srcBlockY: -1,
-            dstBlockX,
-            dstBlockY: -1,
-            srcBlockId: option.id,
-            dstBlockId: visibleGroups[0].option.id,
-            moveTo: 'belowRow',
-        }) as string[]
-
-        await mutator.changeViewVisibleOptionIds(props.board.id, activeView.id, activeView.fields.visibleOptionIds, visibleOptionIdsRearranged)
-
-    }, [board, groupByProperty, visibleGroups, activeView.id])
+        await insertGroupAtIndex(option, insertIndex)
+    }, [board.id, board.cardProperties, groupByProperty, visibleGroups])
 
     const orderAfterMoveToColumn = useCallback((cardIds: string[], columnId?: string): string[] => {
         let cardOrder = activeView.fields.cardOrder.slice()
@@ -195,12 +204,7 @@ const Kanban = (props: Props) => {
             return
         }
 
-        // Reorder the column headers
-        const newContentOrder: Array<string | string[]> = [...visibleOptionIds];
-        const [removedItem] = newContentOrder.splice(dragIndex, 1); // delete dragged element
-        newContentOrder.splice(hoverIndex, 0, removedItem) // insert dragged element
-
-        await mutator.changeViewVisibleOptionIds(props.board.id, activeView.id, activeView.fields.visibleOptionIds, newContentOrder as string[])
+        await insertGroupAtIndex(option, hoverIndex)
 
     }, [visibleGroups, activeView.id])
 
@@ -278,22 +282,6 @@ const Kanban = (props: Props) => {
                 className='octo-board-header'
                 id='mainBoardHeader'
             >
-                {/* Add column button */}
-                {!props.readonly &&
-                    <BoardPermissionGate permissions={[Permission.ManageBoardProperties]}>
-                        <div className='octo-board-header-cell narrow'>
-                            <Button
-                                onClick={addGroupClicked}
-                            >
-                                <FormattedMessage
-                                    id='BoardComponent.add-a-group'
-                                    defaultMessage='+ Add a group'
-                                />
-                            </Button>
-                        </div>
-                    </BoardPermissionGate>
-                }
-
                 {/* Column headers */}
                 {visibleGroups.map((group) => (
                     <KanbanColumnHeader
@@ -307,6 +295,8 @@ const Kanban = (props: Props) => {
                         readonly={props.readonly}
                         propertyNameChanged={propertyNameChanged}
                         moveColumn={moveColumn}
+                        addGroupBefore={addGroupBefore}
+                        addGroupAfter={addGroupAfter}
                         calculationMenuOpen={showCalculationsMenu.get(group.option.id) || false}
                         onCalculationMenuOpen={() => toggleOptions(group.option.id, true)}
                         onCalculationMenuClose={() => toggleOptions(group.option.id, false)}
@@ -331,12 +321,6 @@ const Kanban = (props: Props) => {
                 className='octo-board-body'
                 id='mainBoardBody'
             >
-                {/* Empty column under Add Group Button */}
-                {!props.readonly &&
-                    <BoardPermissionGate permissions={[Permission.ManageBoardProperties]}>
-                        <div className='octo-board-column narrow'/>
-                    </BoardPermissionGate>
-                }
                 {/* Columns */}
 
                 {visibleGroups.map((group) => (
