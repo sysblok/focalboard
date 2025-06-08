@@ -141,12 +141,15 @@ const ViewHeader = (props: Props) => {
         const allFilters = activeView.fields.filter?.filters.filter((o) => !isAFilterGroupInstance(o)) as FilterClause[] || []
         const filterGroup = createFilterGroup(activeView.fields.filter)
 
-        board.cardProperties
-            .filter((o: IPropertyTemplate) => !allFilters.find((f) => f.propertyId === o.id))
-            .forEach((o: IPropertyTemplate) => {
+        board.cardProperties.
+            filter((o: IPropertyTemplate) => !allFilters.find((f) => f.propertyId === o.id)).
+            forEach((o: IPropertyTemplate) => {
                 if (propsRegistry.get(o.type).canFilter) {
                     const filter = createFilterClause()
                     filter.propertyId = o.id
+                    if (o.type === 'text') {
+                        filter.condition = 'contains'
+                    }
                     filterGroup.filters.push(filter)
                 }
             })
