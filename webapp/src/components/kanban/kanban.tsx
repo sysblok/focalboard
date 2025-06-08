@@ -125,7 +125,7 @@ const Kanban = (props: Props) => {
         await mutator.insertPropertyOption(board.id, board.cardProperties, groupByProperty!, option, 'add group')
 
         const visibleOptionIds = visibleGroups.map((o) => o.option.id)
-        const insertIndex = Math.max(0, visibleOptionIds.indexOf(beforeOptionId) - 1)
+        const insertIndex = Math.max(0, visibleOptionIds.indexOf(beforeOptionId))
 
         await insertGroupAtIndex(option, insertIndex)
     }, [board.id, board.cardProperties, groupByProperty, visibleGroups])
