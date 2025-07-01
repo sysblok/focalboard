@@ -3,9 +3,8 @@
 import React, {useState} from 'react'
 import {Link} from 'react-router-dom'
 
-import Button from '../widgets/buttons/button'
+import Form from '../components/form/form'
 import client from '../octoClient'
-import './changeUsernamePage.scss'
 import {IUser} from '../user'
 import {useAppSelector} from '../store/hooks'
 import {getMe} from '../store/users'
@@ -14,7 +13,8 @@ const ChangeUsernamePage = () => {
     const [password, setPassword] = useState('')
     const [newUsername, setNewUsername] = useState('')
     const [errorMessage, setErrorMessage] = useState('')
-    const [succeeded, setSucceeded] = useState(false)
+    const [successMessage, setSuccessMessage] = useState('')
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const user = useAppSelector<IUser|null>(getMe)
 
     if (!user) {
@@ -26,72 +26,90 @@ const ChangeUsernamePage = () => {
         )
     }
 
-    const handleSubmit = async (userId: string): Promise<void> => {
-        const response = await client.changeUsername(userId, password, newUsername)
-        if (response.code === 200) {
-            setPassword('')
-            setNewUsername('')
-            setErrorMessage('')
-            setSucceeded(true)
-        } else {
-            setErrorMessage(`Change username failed: ${response.json?.error}`)
+    const handleSubmit = async (): Promise<void> => {
+        setIsSubmitting(true)
+        setErrorMessage('')
+        setSuccessMessage('')
+
+        try {
+            const response = await client.changeUsername(user.id, password, newUsername)
+            if (response.code === 200) {
+                setPassword('')
+                setNewUsername('')
+                setSuccessMessage('Username changed')
+            } else {
+                setErrorMessage(`Change username failed: ${response.json?.error}`)
+            }
+        } catch (error) {
+            setErrorMessage('An unexpected error occurred')
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
+    const handlePasswordChange = (value: string) => {
+        setPassword(value)
+        setErrorMessage('')
+        setSuccessMessage('')
+    }
+
+    const handleUsernameChange = (value: string) => {
+        setNewUsername(value)
+        setErrorMessage('')
+        setSuccessMessage('')
+    }
+
+    const fields = [
+        {
+            id: 'login.password',
+            type: 'password',
+            placeholder: 'Enter current password',
+            value: password,
+            onChange: handlePasswordChange
+        },
+        {
+            id: 'login.newusername',
+            type: 'text',
+            placeholder: 'Enter new username',
+            value: newUsername,
+            onChange: handleUsernameChange
+        }
+    ]
+
+    const links = successMessage
+        ? [
+            {
+                to: '/',
+                messageId: 'change-username.success-link',
+                defaultMessage: 'Click to continue'
+            }
+        ]
+        : [
+            {
+                to: '/',
+                messageId: 'change-username.cancel',
+                defaultMessage: 'Cancel'
+            }
+        ]
+
     return (
         <div className='ChangeUsernamePage'>
-            <div className='title'>{'Change Username'}</div>
-            <form
-                onSubmit={(e: React.FormEvent) => {
-                    e.preventDefault()
-                    handleSubmit(user.id)
+            <Form
+                title={{
+                    messageId: 'change-username.title',
+                    defaultMessage: 'Change Username'
                 }}
-            >
-                <div className='password'>
-                    <input
-                        id='login-password'
-                        type='password'
-                        placeholder={'Enter current password'}
-                        value={password}
-                        onChange={(e) => {
-                            setPassword(e.target.value)
-                            setErrorMessage('')
-                        }}
-                    />
-                </div>
-                <div className='newUsername'>
-                    <input
-                        id='login-newusername'
-                        type='username'
-                        placeholder={'Enter new username'}
-                        value={newUsername}
-                        onChange={(e) => {
-                            setNewUsername(e.target.value)
-                            setErrorMessage('')
-                        }}
-                    />
-                </div>
-                <Button
-                    filled={true}
-                    submit={true}
-                >
-                    {'Change username'}
-                </Button>
-            </form>
-            {errorMessage &&
-                <div className='error'>
-                    {errorMessage}
-                </div>
-            }
-            {succeeded &&
-                <Link
-                    className='succeeded'
-                    to='/'
-                >{'Username changed, click to continue.'}</Link>
-            }
-            {!succeeded &&
-                <Link to='/'>{'Cancel'}</Link>
-            }
+                fields={fields}
+                submitButton={{
+                    messageId: 'change-username.submit',
+                    defaultMessage: 'Change username'
+                }}
+                links={links}
+                errorMessage={errorMessage}
+                successMessage={successMessage}
+                onSubmit={handleSubmit}
+                isSubmitting={isSubmitting}
+            />
         </div>
     )
 }
