@@ -4,6 +4,7 @@ import React, {useState} from 'react'
 import {Link} from 'react-router-dom'
 
 import Form from '../components/form/form'
+import Layout from '../components/layout/layout'
 import client from '../octoClient'
 import {IUser} from '../user'
 import {useAppSelector} from '../store/hooks'
@@ -93,7 +94,7 @@ const ChangeUsernamePage = () => {
         ]
 
     return (
-        <div className='ChangeUsernamePage'>
+        <Layout>
             <Form
                 title={{
                     messageId: 'change-username.title',
@@ -110,7 +111,7 @@ const ChangeUsernamePage = () => {
                 onSubmit={handleSubmit}
                 isSubmitting={isSubmitting}
             />
-        </div>
+        </Layout>
     )
 }
 

@@ -4,6 +4,7 @@ import React, {useState} from 'react'
 import {Link} from 'react-router-dom'
 
 import Form from '../components/form/form'
+import Layout from '../components/layout/layout'
 import client from '../octoClient'
 import {IUser} from '../user'
 import {useAppSelector} from '../store/hooks'
@@ -93,7 +94,7 @@ const ChangePasswordPage = () => {
         ]
 
     return (
-        <div className='ChangePasswordPage'>
+        <Layout>
             <Form
                 title={{
                     messageId: 'change-password.title',
@@ -110,7 +111,7 @@ const ChangePasswordPage = () => {
                 onSubmit={handleSubmit}
                 isSubmitting={isSubmitting}
             />
-        </div>
+        </Layout>
     )
 }
 

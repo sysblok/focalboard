@@ -4,6 +4,7 @@ import React, {useState} from 'react'
 import {Redirect, useHistory, useLocation} from 'react-router-dom'
 
 import Form from '../components/form/form'
+import Layout from '../components/layout/layout'
 import {useAppDispatch, useAppSelector} from '../store/hooks'
 import {fetchMe, getLoggedIn} from '../store/users'
 import client from '../octoClient'
@@ -79,22 +80,23 @@ const LoginPage = () => {
     ]
 
     return (
-        <Form
-            className="LoginPage"
-            title={{
-                messageId: 'login.log-in-title',
-                defaultMessage: 'Log in'
-            }}
-            fields={formFields}
-            submitButton={{
-                messageId: 'login.log-in-button',
-                defaultMessage: 'Log in'
-            }}
-            links={formLinks}
-            errorMessage={errorMessage}
-            onSubmit={handleLogin}
-            isSubmitting={isSubmitting}
-        />
+        <Layout>
+            <Form
+                title={{
+                    messageId: 'login.log-in-title',
+                    defaultMessage: 'Log in'
+                }}
+                fields={formFields}
+                submitButton={{
+                    messageId: 'login.log-in-button',
+                    defaultMessage: 'Log in'
+                }}
+                links={formLinks}
+                errorMessage={errorMessage}
+                onSubmit={handleLogin}
+                isSubmitting={isSubmitting}
+            />
+        </Layout>
     )
 }
 

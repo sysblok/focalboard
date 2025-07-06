@@ -4,6 +4,7 @@ import React, {useState} from 'react'
 import {useHistory, Redirect} from 'react-router-dom'
 
 import Form from '../components/form/form'
+import Layout from '../components/layout/layout'
 import {useAppDispatch, useAppSelector} from '../store/hooks'
 import {fetchMe, getLoggedIn} from '../store/users'
 
@@ -81,21 +82,22 @@ const RegisterPage = () => {
     ]
 
     return (
-        <Form
-            className="RegisterPage"
-            title={{
-                messageId: 'register.signup-title',
-                defaultMessage: 'Sign up for your account'
-            }}
-            fields={formFields}
-            submitButton={{
-                defaultMessage: 'Register'
-            }}
-            links={formLinks}
-            errorMessage={errorMessage}
-            onSubmit={handleRegister}
-            isSubmitting={isSubmitting}
-        />
+        <Layout>
+            <Form
+                title={{
+                    messageId: 'register.signup-title',
+                    defaultMessage: 'Sign up for your account'
+                }}
+                fields={formFields}
+                submitButton={{
+                    defaultMessage: 'Register'
+                }}
+                links={formLinks}
+                errorMessage={errorMessage}
+                onSubmit={handleRegister}
+                isSubmitting={isSubmitting}
+            />
+        </Layout>
     )
 }
 

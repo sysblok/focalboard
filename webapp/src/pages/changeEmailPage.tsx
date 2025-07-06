@@ -4,6 +4,7 @@ import React, {useState} from 'react'
 import {Link} from 'react-router-dom'
 
 import Form from '../components/form/form'
+import Layout from '../components/layout/layout'
 import client from '../octoClient'
 import {IUser} from '../user'
 import {useAppSelector} from '../store/hooks'
@@ -94,22 +95,24 @@ const ChangeEmailPage = () => {
 
     return (
         <div className='ChangeEmailPage'>
-            <Form
-                title={{
-                    messageId: 'change-email.title',
-                    defaultMessage: 'Change Email'
-                }}
-                fields={fields}
-                submitButton={{
-                    messageId: 'change-email.submit',
-                    defaultMessage: 'Change email'
-                }}
-                links={links}
-                errorMessage={errorMessage}
-                successMessage={successMessage}
-                onSubmit={handleSubmit}
-                isSubmitting={isSubmitting}
-            />
+            <Layout>
+                <Form
+                    title={{
+                        messageId: 'change-email.title',
+                        defaultMessage: 'Change Email'
+                    }}
+                    fields={fields}
+                    submitButton={{
+                        messageId: 'change-email.submit',
+                        defaultMessage: 'Change email'
+                    }}
+                    links={links}
+                    errorMessage={errorMessage}
+                    successMessage={successMessage}
+                    onSubmit={handleSubmit}
+                    isSubmitting={isSubmitting}
+                />
+            </Layout>
         </div>
     )
 }
