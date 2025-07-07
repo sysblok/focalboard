@@ -1,13 +1,13 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 import React, {useCallback, useEffect, useState} from 'react'
-import {useIntl} from 'react-intl';
 
 import './adminPage.scss'
 import client from '../octoClient'
 import {IUser} from '../user';
 import Sidebar from '../components/sidebar/sidebar';
 import BoardTemplateSelector from '../components/boardTemplateSelector/boardTemplateSelector';
+import ChangePasswordDialog from '../components/changePasswordDialog/changePasswordDialog';
 import User from '../components/user/user';
 
 import {useAppSelector} from '../store/hooks';
@@ -20,6 +20,7 @@ const AdminPage = () => {
     const me = useAppSelector<IUser|null>(getMe)
     const [users, setUsers] = useState<IUser[]>([]);
     const [boardTemplateSelectorOpen, setBoardTemplateSelectorOpen] = useState<boolean>(false)
+    const [changePasswordUser, setChangePasswordUser] = useState<IUser | null>(null);
 
     const fetchUsers = async () => {
         const result = await client.getTeamUsers();
@@ -36,6 +37,26 @@ const AdminPage = () => {
     const closeBoardTemplateSelector = useCallback(() => {
         setBoardTemplateSelectorOpen(false)
     }, [])
+
+    const openChangePasswordDialog = useCallback((user: IUser) => {
+        setChangePasswordUser(user);
+    }, [])
+
+    const closeChangePasswordDialog = useCallback(() => {
+        setChangePasswordUser(null);
+    }, [])
+
+    const handleChangePassword = useCallback(async (newPassword: string) => {
+        if (!changePasswordUser) return;
+
+        try {
+            // await client.changeUserPassword(changePasswordUser.id, newPassword); TODO
+            console.log(`Changing password for user ${changePasswordUser.username}`);
+            closeChangePasswordDialog();
+        } catch (error) {
+            console.error('Failed to change password:', error);
+        }
+    }, [changePasswordUser, closeChangePasswordDialog]);
 
     return (
         <div className='AdminPage'>
@@ -58,10 +79,19 @@ const AdminPage = () => {
                                 user={user}
                                 teammateNameDisplay={clientConfig.teammateNameDisplay}
                                 isMe={me && user.id === me.id}
+                                onChangePassword={() => openChangePasswordDialog(user)}
                             />
                         </li>
                     ))}
                 </ul>
+
+                {changePasswordUser && (
+                    <ChangePasswordDialog
+                        user={changePasswordUser}
+                        onClose={closeChangePasswordDialog}
+                        onConfirm={handleChangePassword}
+                    />
+                )}
             </div>
         </div>
     );
