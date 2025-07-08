@@ -12,7 +12,7 @@ import client from '../octoClient'
 const LoginPage = () => {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
-    const [errorMessage, setErrorMessage] = useState('')
+    const [errorMessage, setErrorMessage] = useState<{messageId: string, defaultMessage: string} | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const dispatch = useAppDispatch()
     const loggedIn = useAppSelector<boolean|null>(getLoggedIn)
@@ -21,7 +21,7 @@ const LoginPage = () => {
 
     const handleLogin = async (): Promise<void> => {
         setIsSubmitting(true)
-        setErrorMessage('')
+        setErrorMessage(null)
 
         try {
             const logged = await client.login(username, password)
@@ -30,10 +30,16 @@ const LoginPage = () => {
                 const redirectTo = queryParams.get('r') || '/'
                 history.push(redirectTo)
             } else {
-                setErrorMessage('Login failed')
+                setErrorMessage({
+                    messageId: 'login.log-in-error',
+                    defaultMessage: 'Login failed'
+                })
             }
         } catch (error) {
-            setErrorMessage('Login failed')
+            setErrorMessage({
+                messageId: 'login.log-in-error',
+                defaultMessage: 'Login failed'
+            })
         } finally {
             setIsSubmitting(false)
         }
@@ -42,7 +48,7 @@ const LoginPage = () => {
     const clearErrorOnChange = (value: string, setter: (value: string) => void) => {
         setter(value)
         if (errorMessage) {
-            setErrorMessage('')
+            setErrorMessage(null)
         }
     }
 
@@ -72,11 +78,6 @@ const LoginPage = () => {
             messageId: 'login.register-button',
             defaultMessage: 'or create an account if you don\'t have one'
         },
-        {
-            to: '/reset',
-            messageId: 'login.reset-button',
-            defaultMessage: 'Forgot password?'
-        }
     ]
 
     return (

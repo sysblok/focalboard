@@ -14,7 +14,7 @@ const RegisterPage = () => {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [email, setEmail] = useState('')
-    const [errorMessage, setErrorMessage] = useState('')
+    const [errorMessage, setErrorMessage] = useState<{messageId: string, defaultMessage: string} | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const history = useHistory()
     const dispatch = useAppDispatch()
@@ -22,7 +22,7 @@ const RegisterPage = () => {
 
     const handleRegister = async (): Promise<void> => {
         setIsSubmitting(true)
-        setErrorMessage('')
+        setErrorMessage(null)
 
         try {
             const queryString = new URLSearchParams(window.location.search)
@@ -36,12 +36,21 @@ const RegisterPage = () => {
                     history.push('/')
                 }
             } else if (response.code === 401) {
-                setErrorMessage('Invalid registration link, please contact your administrator')
+                setErrorMessage({
+                    messageId: 'register.register-link-error',
+                    defaultMessage: 'Invalid registration link, please contact your administrator'
+                })
             } else {
-                setErrorMessage(`${response.json?.error}`)
+                setErrorMessage({
+                    messageId: 'register.log-in-error',
+                    defaultMessage: 'Registration failed'
+                })
             }
         } catch (error) {
-            setErrorMessage('Registration failed')
+            setErrorMessage({
+                messageId: 'register.log-in-error',
+                defaultMessage: 'Registration failed'
+            })
         } finally {
             setIsSubmitting(false)
         }

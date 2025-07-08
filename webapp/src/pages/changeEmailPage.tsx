@@ -13,8 +13,8 @@ import {getMe} from '../store/users'
 const ChangeEmailPage = () => {
     const [password, setPassword] = useState('')
     const [newEmail, setNewEmail] = useState('')
-    const [errorMessage, setErrorMessage] = useState('')
-    const [successMessage, setSuccessMessage] = useState('')
+    const [errorMessage, setErrorMessage] = useState<{messageId: string, defaultMessage: string} | null>(null)
+    const [successMessage, setSuccessMessage] = useState<{messageId: string, defaultMessage: string} | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const user = useAppSelector<IUser|null>(getMe)
 
@@ -29,20 +29,29 @@ const ChangeEmailPage = () => {
 
     const handleSubmit = async (): Promise<void> => {
         setIsSubmitting(true)
-        setErrorMessage('')
-        setSuccessMessage('')
+        setErrorMessage(null)
+        setSuccessMessage(null)
 
         try {
             const response = await client.changeEmail(user.id, password, newEmail)
             if (response.code === 200) {
                 setPassword('')
                 setNewEmail('')
-                setSuccessMessage('Email changed')
+                setSuccessMessage({
+                    messageId: 'change-email.success',
+                    defaultMessage: 'Email changed'
+                })
             } else {
-                setErrorMessage(`Change email failed: ${response.json?.error}`)
+                setErrorMessage({
+                    messageId: 'change-email.error',
+                    defaultMessage: `Email change failed`
+                })
             }
         } catch (error) {
-            setErrorMessage('An unexpected error occurred')
+            setErrorMessage({
+                messageId: 'change-email.error',
+                defaultMessage: `Email change failed`
+            })
         } finally {
             setIsSubmitting(false)
         }
@@ -50,14 +59,14 @@ const ChangeEmailPage = () => {
 
     const handlePasswordChange = (value: string) => {
         setPassword(value)
-        setErrorMessage('')
-        setSuccessMessage('')
+        setErrorMessage(null)
+        setSuccessMessage(null)
     }
 
     const handleEmailChange = (value: string) => {
         setNewEmail(value)
-        setErrorMessage('')
-        setSuccessMessage('')
+        setErrorMessage(null)
+        setSuccessMessage(null)
     }
 
     const fields = [

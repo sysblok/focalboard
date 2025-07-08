@@ -13,8 +13,8 @@ import {getMe} from '../store/users'
 const ChangeUsernamePage = () => {
     const [password, setPassword] = useState('')
     const [newUsername, setNewUsername] = useState('')
-    const [errorMessage, setErrorMessage] = useState('')
-    const [successMessage, setSuccessMessage] = useState('')
+    const [errorMessage, setErrorMessage] = useState<{messageId: string, defaultMessage: string} | null>(null)
+    const [successMessage, setSuccessMessage] = useState<{messageId: string, defaultMessage: string} | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const user = useAppSelector<IUser|null>(getMe)
 
@@ -29,20 +29,29 @@ const ChangeUsernamePage = () => {
 
     const handleSubmit = async (): Promise<void> => {
         setIsSubmitting(true)
-        setErrorMessage('')
-        setSuccessMessage('')
+        setErrorMessage(null)
+        setSuccessMessage(null)
 
         try {
             const response = await client.changeUsername(user.id, password, newUsername)
             if (response.code === 200) {
                 setPassword('')
                 setNewUsername('')
-                setSuccessMessage('Username changed')
+                setSuccessMessage({
+                    messageId: 'change-username.success',
+                    defaultMessage: 'Username changed'
+                })
             } else {
-                setErrorMessage(`Change username failed: ${response.json?.error}`)
+                setErrorMessage({
+                    messageId: 'change-username.error',
+                    defaultMessage: `Username change failed`
+                })
             }
         } catch (error) {
-            setErrorMessage('An unexpected error occurred')
+            setErrorMessage({
+                messageId: 'login.log-in-error',
+                defaultMessage: `Username change failed`
+            })
         } finally {
             setIsSubmitting(false)
         }
@@ -50,14 +59,14 @@ const ChangeUsernamePage = () => {
 
     const handlePasswordChange = (value: string) => {
         setPassword(value)
-        setErrorMessage('')
-        setSuccessMessage('')
+        setErrorMessage(null)
+        setSuccessMessage(null)
     }
 
     const handleUsernameChange = (value: string) => {
         setNewUsername(value)
-        setErrorMessage('')
-        setSuccessMessage('')
+        setErrorMessage(null)
+        setSuccessMessage(null)
     }
 
     const fields = [

@@ -13,8 +13,8 @@ import {getMe} from '../store/users'
 const ChangePasswordPage = () => {
     const [oldPassword, setOldPassword] = useState('')
     const [newPassword, setNewPassword] = useState('')
-    const [errorMessage, setErrorMessage] = useState('')
-    const [successMessage, setSuccessMessage] = useState('')
+    const [errorMessage, setErrorMessage] = useState<{messageId: string, defaultMessage: string} | null>(null)
+    const [successMessage, setSuccessMessage] = useState<{messageId: string, defaultMessage: string} | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const user = useAppSelector<IUser|null>(getMe)
 
@@ -29,20 +29,29 @@ const ChangePasswordPage = () => {
 
     const handleSubmit = async (): Promise<void> => {
         setIsSubmitting(true)
-        setErrorMessage('')
-        setSuccessMessage('')
+        setErrorMessage(null)
+        setSuccessMessage(null)
 
         try {
             const response = await client.changePassword(user.id, oldPassword, newPassword)
             if (response.code === 200) {
                 setOldPassword('')
                 setNewPassword('')
-                setSuccessMessage('Password changed')
+                setSuccessMessage({
+                    messageId: 'change-password.success',
+                    defaultMessage: 'Password changed'
+                })
             } else {
-                setErrorMessage(`Change password failed: ${response.json?.error}`)
+                setErrorMessage({
+                    messageId: 'change-password.error',
+                    defaultMessage: `Password change failed`
+                })
             }
         } catch (error) {
-            setErrorMessage('An unexpected error occurred')
+            setErrorMessage({
+                messageId: 'change-password.error',
+                defaultMessage: `Password change failed`
+            })
         } finally {
             setIsSubmitting(false)
         }
@@ -50,14 +59,14 @@ const ChangePasswordPage = () => {
 
     const handleOldPasswordChange = (value: string) => {
         setOldPassword(value)
-        setErrorMessage('')
-        setSuccessMessage('')
+        setErrorMessage(null)
+        setSuccessMessage(null)
     }
 
     const handleNewPasswordChange = (value: string) => {
         setNewPassword(value)
-        setErrorMessage('')
-        setSuccessMessage('')
+        setErrorMessage(null)
+        setSuccessMessage(null)
     }
 
     const fields = [

@@ -31,8 +31,14 @@ interface FormProps {
         defaultMessage: string
     }
     links?: FormLink[]
-    errorMessage?: string
-    successMessage?: string
+    errorMessage?: {
+        messageId: string
+        defaultMessage: string
+    } | null
+    successMessage?: {
+        messageId: string
+        defaultMessage: string
+    } | null
     onSubmit: () => void
     isSubmitting?: boolean
 }
@@ -94,12 +100,18 @@ const Form: React.FC<FormProps> = ({
             <div className='message-container'>
                 {errorMessage && (
                     <div className='error'>
-                        {errorMessage}
+                        <FormattedMessage
+                            id={errorMessage.messageId}
+                            defaultMessage={errorMessage.defaultMessage}
+                        />
                     </div>
                 )}
                 {successMessage && (
                     <div className='success'>
-                        {successMessage}
+                        <FormattedMessage
+                            id={successMessage.messageId}
+                            defaultMessage={successMessage.defaultMessage}
+                        />
                     </div>
 
 
