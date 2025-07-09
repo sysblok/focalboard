@@ -11,61 +11,60 @@ import './changePasswordDialog.scss'
 type Props = {
     user: IUser
     onClose: () => void
-    onConfirm: (newPassword: string) => void
+    onConfirm: (userId: string, newPassword: string) => void
+    errorMessage?: {
+        messageId: string
+        defaultMessage: string
+    } | null
+    successMessage?: {
+        messageId: string
+        defaultMessage: string
+    } | null
+    isSubmitting?: boolean
 }
 
-const ChangePasswordDialog = (props: Props) => {
-    const {user, onClose, onConfirm} = props
+const changePasswordDialog = (props: Props) => {
+    const {user, onClose, onConfirm, errorMessage, successMessage, isSubmitting = false} = props
     const intl = useIntl()
     const [newPassword, setNewPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
-    const [error, setError] = useState('')
-    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [localError, setLocalError] = useState<{messageId: string, defaultMessage: string} | null>(null)
     const username =  Utils.getUserDisplayName(user, 'username')
 
     const handleSubmit = useCallback(() => {
-        setError('')
-        setIsSubmitting(true)
 
-        try {
-            if (!newPassword.trim()) {
-                setError(intl.formatMessage({
-                    id: 'ChangePassword.emptyPassword',
-                    defaultMessage: 'Password cannot be empty'
-                }))
-                return
-            }
+        setLocalError(null)
 
-            if (newPassword !== confirmPassword) {
-                setError(intl.formatMessage({
-                    id: 'ChangePassword.passwordMismatch',
-                    defaultMessage: 'Passwords do not match'
-                }))
-                return
-            }
-
-            if (newPassword.length < 6) {
-                setError(intl.formatMessage({
-                    id: 'ChangePassword.passwordTooShort',
-                    defaultMessage: 'Password must be at least 6 characters long'
-                }))
-                return
-            }
-
-            onConfirm(newPassword)
-        } catch (err) {
-            setError(intl.formatMessage({
-                id: 'ChangePassword.error',
-                defaultMessage: 'Failed to change password'
-            }))
-        } finally {
-            setIsSubmitting(false)
+        if (!newPassword.trim()) {
+            setLocalError({
+                messageId: 'change-password.error-empty',
+                defaultMessage: 'Password cannot be empty'
+            })
+            return
         }
+
+        if (newPassword !== confirmPassword) {
+            setLocalError({
+                messageId: 'change-password.error-mismatch',
+                defaultMessage: 'Passwords do not match'
+            })
+            return
+        }
+
+        if (newPassword.length < 6) {
+            setLocalError({
+                messageId: 'change-password.error-too-short',
+                defaultMessage: 'Password must be at least 6 characters long'
+            })
+            return
+        }
+
+        onConfirm(user.id, newPassword)
     }, [newPassword, confirmPassword, onConfirm, intl])
 
     const dialogTitle = (
         <FormattedMessage
-            id='ChangePassword.dialogTitle'
+            id='change-password.dialog-title'
             defaultMessage={'Change user\'s password'}
         />
     )
@@ -75,7 +74,7 @@ const ChangePasswordDialog = (props: Props) => {
             id: 'new-password',
             type: 'password',
             placeholder: intl.formatMessage({
-                id: 'ChangePassword.newPasswordPlaceholder',
+                id: 'change-password.placeholder',
                 defaultMessage: 'Enter new password'
             }),
             value: newPassword,
@@ -85,13 +84,16 @@ const ChangePasswordDialog = (props: Props) => {
             id: 'confirm-password',
             type: 'password',
             placeholder: intl.formatMessage({
-                id: 'ChangePassword.confirmPasswordPlaceholder',
+                id: 'change-password.confirm-placeholder',
                 defaultMessage: 'Confirm new password'
             }),
             value: confirmPassword,
             onChange: setConfirmPassword
         }
     ]
+
+    const displayErrorMessage = localError || errorMessage
+    const displaySuccessMessage = localError ? null : successMessage
 
     return (
         <Dialog
@@ -105,15 +107,16 @@ const ChangePasswordDialog = (props: Props) => {
             <p className='text-heading2'>Email: {user.email}</p>
                 <Form
                     title={{
-                        messageId: 'ChangePassword.formTitle',
+                        messageId: 'change-password.title',
                         defaultMessage: 'Set New Password'
                     }}
                     fields={formFields}
                     submitButton={{
-                        messageId: 'ChangePassword.submit',
+                        messageId: 'change-password.submit',
                         defaultMessage: 'Change Password'
                     }}
-                    errorMessage={error}
+                    errorMessage={displayErrorMessage}
+                    successMessage={displaySuccessMessage}
                     onSubmit={handleSubmit}
                     isSubmitting={isSubmitting}
                 />
@@ -122,4 +125,4 @@ const ChangePasswordDialog = (props: Props) => {
     )
 }
 
-export default React.memo(ChangePasswordDialog)
+export default React.memo(changePasswordDialog)

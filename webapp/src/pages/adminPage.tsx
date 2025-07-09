@@ -3,7 +3,7 @@
 import React, {useCallback, useEffect, useState} from 'react'
 
 import './adminPage.scss'
-import client from '../octoClient'
+import octoClient from '../octoClient'
 import {IUser} from '../user';
 import Sidebar from '../components/sidebar/sidebar';
 import BoardTemplateSelector from '../components/boardTemplateSelector/boardTemplateSelector';
@@ -21,9 +21,12 @@ const AdminPage = () => {
     const [users, setUsers] = useState<IUser[]>([]);
     const [boardTemplateSelectorOpen, setBoardTemplateSelectorOpen] = useState<boolean>(false)
     const [changePasswordUser, setChangePasswordUser] = useState<IUser | null>(null);
+    const [errorMessage, setErrorMessage] = useState<{messageId: string, defaultMessage: string} | null>(null)
+    const [successMessage, setSuccessMessage] = useState<{messageId: string, defaultMessage: string} | null>(null)
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     const fetchUsers = async () => {
-        const result = await client.getTeamUsers();
+        const result = await octoClient.getTeamUsers();
         setUsers(result)
     };
 
@@ -39,24 +42,48 @@ const AdminPage = () => {
     }, [])
 
     const openChangePasswordDialog = useCallback((user: IUser) => {
-        setChangePasswordUser(user);
+        setChangePasswordUser(user)
+        setErrorMessage(null)
+        setSuccessMessage(null)
     }, [])
 
     const closeChangePasswordDialog = useCallback(() => {
+        setErrorMessage(null)
+        setSuccessMessage(null)
+        setIsSubmitting(false)
         setChangePasswordUser(null);
     }, [])
 
-    const handleChangePassword = useCallback(async (newPassword: string) => {
-        if (!changePasswordUser) return;
+    const handleChangePassword = useCallback(async (userId: string, newPassword: string) => {
 
         try {
-            // await client.changeUserPassword(changePasswordUser.id, newPassword); TODO
-            console.log(`Changing password for user ${changePasswordUser.username}`);
-            closeChangePasswordDialog();
+            const success =  await octoClient.changeUserPassword(userId, newPassword)
+
+            if (success) {
+                console.log('success')
+                setSuccessMessage({
+                    messageId: 'change-password.success',
+                    defaultMessage: 'Password changed successfully'
+                })
+                setErrorMessage(null)
+
+            } else {
+                setErrorMessage({
+                    messageId: 'change-password.failed',
+                    defaultMessage: 'Failed to change password. Please try again.'
+                })
+                setSuccessMessage(null)
+            }
         } catch (error) {
-            console.error('Failed to change password:', error);
+            setErrorMessage({
+                messageId: 'change-password.error',
+                defaultMessage: 'An error occurred while changing password'
+            })
+            setSuccessMessage(null)
+        } finally {
+            setIsSubmitting(false)
         }
-    }, [changePasswordUser, closeChangePasswordDialog]);
+    }, [closeChangePasswordDialog]);
 
     return (
         <div className='AdminPage'>
@@ -90,6 +117,9 @@ const AdminPage = () => {
                         user={changePasswordUser}
                         onClose={closeChangePasswordDialog}
                         onConfirm={handleChangePassword}
+                        errorMessage={errorMessage}
+                        successMessage={successMessage}
+                        isSubmitting={isSubmitting}
                     />
                 )}
             </div>
