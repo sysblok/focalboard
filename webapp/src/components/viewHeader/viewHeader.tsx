@@ -141,20 +141,23 @@ const ViewHeader = (props: Props) => {
         const allFilters = activeView.fields.filter?.filters.filter((o) => !isAFilterGroupInstance(o)) as FilterClause[] || []
         const filterGroup = createFilterGroup(activeView.fields.filter)
 
-        board.cardProperties.
-            filter((o: IPropertyTemplate) => !allFilters.find((f) => f.propertyId === o.id)).
-            forEach((o: IPropertyTemplate) => {
-                if (propsRegistry.get(o.type).canFilter) {
-                    const filter = createFilterClause()
-                    filter.propertyId = o.id
-                    if (o.type === 'text') {
-                        filter.condition = 'contains'
-                    }
-                    filterGroup.filters.push(filter)
-                }
-            })
+        const targetProperty = board.cardProperties.find((o: IPropertyTemplate) => o.name === "Ответственный")
 
-        dispatch(updateViewFilter(filterGroup))
+        if (targetProperty) {
+            const existingFilter = allFilters.find((f) => f.propertyId === targetProperty.id)
+
+            if (!existingFilter && propsRegistry.get(targetProperty.type).canFilter) {
+                const filter = createFilterClause()
+                filter.propertyId = targetProperty.id
+
+                if (targetProperty.type === 'text') {
+                    filter.condition = 'contains'
+                }
+
+                filterGroup.filters.push(filter)
+                dispatch(updateViewFilter(filterGroup))
+            }
+        }
     }
 
     useEffect(() => {
