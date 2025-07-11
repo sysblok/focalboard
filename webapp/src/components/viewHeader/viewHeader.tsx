@@ -136,33 +136,32 @@ const ViewHeader = (props: Props) => {
         return false
     }
 
-    // add all possible filters in current view
-    const addAllFilters = () => {
+    // add all filters to view or chose filters by name
+    const addFilters = (filterNames: string[] = []) => {
         const allFilters = activeView.fields.filter?.filters.filter((o) => !isAFilterGroupInstance(o)) as FilterClause[] || []
         const filterGroup = createFilterGroup(activeView.fields.filter)
 
-        const targetProperty = board.cardProperties.find((o: IPropertyTemplate) => o.name === "Ответственный")
-
-        if (targetProperty) {
-            const existingFilter = allFilters.find((f) => f.propertyId === targetProperty.id)
-
-            if (!existingFilter && propsRegistry.get(targetProperty.type).canFilter) {
-                const filter = createFilterClause()
-                filter.propertyId = targetProperty.id
-
-                if (targetProperty.type === 'text') {
-                    filter.condition = 'contains'
+        board.cardProperties.
+            filter((o: IPropertyTemplate) => !allFilters.find((f) => f.propertyId === o.id)).
+            forEach((o: IPropertyTemplate) => {
+                if (propsRegistry.get(o.type).canFilter) {
+                    if (filterNames.length === 0 || filterNames.includes(o.name)) {
+                        const filter = createFilterClause()
+                        filter.propertyId = o.id
+                        if (o.type === 'text') {
+                            filter.condition = 'contains'
+                        }
+                        filterGroup.filters.push(filter)
+                    }
                 }
+            })
 
-                filterGroup.filters.push(filter)
-                dispatch(updateViewFilter(filterGroup))
-            }
-        }
+        dispatch(updateViewFilter(filterGroup))
     }
 
     useEffect(() => {
         if (canEditBoardProperties) {
-            addAllFilters()
+            addFilters(["Ответственный"])
         }
     }, [canEditBoardProperties])
 
