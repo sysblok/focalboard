@@ -136,8 +136,8 @@ const ViewHeader = (props: Props) => {
         return false
     }
 
-    // add all possible filters in current view
-    const addAllFilters = () => {
+    // add all filters to view or chose filters by name
+    const addFilters = (filterNames: string[] = []) => {
         const allFilters = activeView.fields.filter?.filters.filter((o) => !isAFilterGroupInstance(o)) as FilterClause[] || []
         const filterGroup = createFilterGroup(activeView.fields.filter)
 
@@ -145,12 +145,14 @@ const ViewHeader = (props: Props) => {
             filter((o: IPropertyTemplate) => !allFilters.find((f) => f.propertyId === o.id)).
             forEach((o: IPropertyTemplate) => {
                 if (propsRegistry.get(o.type).canFilter) {
-                    const filter = createFilterClause()
-                    filter.propertyId = o.id
-                    if (o.type === 'text') {
-                        filter.condition = 'contains'
+                    if (filterNames.length === 0 || filterNames.includes(o.name)) {
+                        const filter = createFilterClause()
+                        filter.propertyId = o.id
+                        if (o.type === 'text') {
+                            filter.condition = 'contains'
+                        }
+                        filterGroup.filters.push(filter)
                     }
-                    filterGroup.filters.push(filter)
                 }
             })
 
@@ -159,7 +161,7 @@ const ViewHeader = (props: Props) => {
 
     useEffect(() => {
         if (canEditBoardProperties) {
-            addAllFilters()
+            addFilters(["Ответственный"])
         }
     }, [canEditBoardProperties])
 
