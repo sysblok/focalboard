@@ -189,12 +189,20 @@ const PersonSelector = (props: Props): JSX.Element => {
                 className={`${primaryClass}${secondaryClass}`}
                 classNamePrefix={'react-select'}
                 formatOptionLabel={formatOptionLabel}
-                styles={selectStyles}
                 placeholder={emptyDisplayValue}
                 getOptionLabel={(o: IUser) => o.username}
                 getOptionValue={(a: IUser) => a.id}
                 value={users}
                 onChange={onChange}
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
+                styles={{
+                    ...selectStyles,
+                    menuPortal: (base) => ({
+                        ...base,
+                        zIndex: 9999
+                    })
+                }}
             />
         </>
     )
