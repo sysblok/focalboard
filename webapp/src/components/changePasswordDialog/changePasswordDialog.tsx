@@ -51,10 +51,10 @@ const changePasswordDialog = (props: Props) => {
             return
         }
 
-        if (newPassword.length < 6) {
+        if (newPassword.length < 8) {
             setLocalError({
                 messageId: 'change-password.error-too-short',
-                defaultMessage: 'Password must be at least 6 characters long'
+                defaultMessage: 'Password must be at least 8 characters long'
             })
             return
         }
