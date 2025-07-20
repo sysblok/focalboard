@@ -194,15 +194,7 @@ const PersonSelector = (props: Props): JSX.Element => {
                 getOptionValue={(a: IUser) => a.id}
                 value={users}
                 onChange={onChange}
-                menuPortalTarget={document.body}
-                menuPosition="fixed"
-                styles={{
-                    ...selectStyles,
-                    menuPortal: (base) => ({
-                        ...base,
-                        zIndex: 9999
-                    })
-                }}
+                styles={selectStyles}
             />
         </>
     )
