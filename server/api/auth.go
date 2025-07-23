@@ -28,6 +28,7 @@ func (a *API) registerAuthRoutes(r *mux.Router) {
 		r.HandleFunc("/users/{userID}/changepassword", a.sessionRequired(a.handleChangePassword)).Methods("POST")
 		r.HandleFunc("/users/{userID}/changeemail", a.sessionRequired(a.handleChangeEmail)).Methods("POST")
 		r.HandleFunc("/users/{userID}/changeusername", a.sessionRequired(a.handleChangeUsername)).Methods("POST")
+		r.HandleFunc("/users/{userID}/changeuserpassword", a.sessionRequired(a.handleChangeUserPassword)).Methods("POST")
 	}
 }
 
@@ -340,10 +341,10 @@ func (a *API) handleRegisterOrFetch(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// means the user was already there
 		// TODO alexeyqu improve semantics here
-		jsonStringResponse(w, http.StatusOK, "{\"userId\": \"" + userId + "\", \"isNew\": false}")
+		jsonStringResponse(w, http.StatusOK, "{\"userId\": \""+userId+"\", \"isNew\": false}")
 	} else {
 		// means we've created a new one
-		jsonStringResponse(w, http.StatusOK, "{\"userId\": \"" + userId + "\", \"isNew\": true}")
+		jsonStringResponse(w, http.StatusOK, "{\"userId\": \""+userId+"\", \"isNew\": true}")
 	}
 
 	auditRec.Success()
@@ -570,6 +571,107 @@ func (a *API) handleChangeUsername(w http.ResponseWriter, r *http.Request) {
 
 	if err = a.app.ChangeUsername(userID, requestData.Password, requestData.NewUsername); err != nil {
 		a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
+		return
+	}
+
+	jsonStringResponse(w, http.StatusOK, "{}")
+	auditRec.Success()
+}
+
+func (a *API) handleChangeUserPassword(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation POST /users/{userID}/changeuserpassword changeUserPassword
+	//
+	// Change a user's password by admin
+	//
+	// ---
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: userID
+	//   in: path
+	//   description: User ID
+	//   required: true
+	//   type: string
+	// - name: body
+	//   in: body
+	//   description: Change user password request
+	//   required: true
+	//   schema:
+	//     "$ref": "#/definitions/ChangeUserPasswordRequest"
+	// security:
+	// - BearerAuth: []
+	// responses:
+	//   '200':
+	//     description: success
+	//   '400':
+	//     description: invalid request
+	//     schema:
+	//       "$ref": "#/definitions/ErrorResponse"
+	//   '500':
+	//     description: internal error
+	//     schema:
+	//       "$ref": "#/definitions/ErrorResponse"
+
+	if a.MattermostAuth {
+		a.errorResponse(w, r, model.NewErrNotImplemented("not permitted in plugin mode"))
+		return
+	}
+
+	if len(a.singleUserToken) > 0 {
+		// Not permitted in single-user mode
+		a.errorResponse(w, r, model.NewErrUnauthorized("not permitted in single-user mode"))
+		return
+	}
+
+	currentUserID := getUserID(r)
+
+	currentUser, err := a.app.GetUser(currentUserID)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	// MVP: Hardcoded admin usernames (consistent with frontend)
+	adminUsers := []string{"admin", "bulgak0v", "nastasia75", "user"}
+	isAdmin := false
+	for _, admin := range adminUsers {
+		if currentUser.Username == admin {
+			isAdmin = true
+			break
+		}
+	}
+
+	if !isAdmin {
+		a.errorResponse(w, r, model.NewErrForbidden("admin privileges required"))
+		return
+	}
+
+	vars := mux.Vars(r)
+	userID := vars["userID"]
+
+	requestBody, err := io.ReadAll(r.Body)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	var requestData model.ChangeUserPasswordRequest
+	if err = json.Unmarshal(requestBody, &requestData); err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	if err = requestData.IsValid(); err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	auditRec := a.makeAuditRecord(r, "changeUserPassword", audit.Fail)
+	defer a.audit.LogRecord(audit.LevelAuth, auditRec)
+
+	err = a.app.UpdateUserPasswordByID(userID, requestData.NewPassword)
+	if err != nil {
+		a.errorResponse(w, r, err)
 		return
 	}
 
