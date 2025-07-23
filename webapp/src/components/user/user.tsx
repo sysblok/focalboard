@@ -26,7 +26,9 @@ const User = (props: Props) => {
         <div className='user'>
             <div className='ml-3'>
                 <strong>{Utils.getUserDisplayName(user, teammateNameDisplay)}</strong>
-                <strong className='ml-2 text-light'>{`@${user.username}`}</strong>
+                {user.email &&
+                    <strong className='ml-2 text-light'>{`${user.email}`}</strong>
+                }
                 {isMe &&
                     <strong className='ml-2 text-light'>{intl.formatMessage({id: 'ShareBoard.userPermissionsYouText', defaultMessage: '(You)'})}</strong>
                 }
