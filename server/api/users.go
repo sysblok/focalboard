@@ -301,11 +301,11 @@ func (a *API) handleGetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if userID == session.UserID {
-		user.Sanitize(map[string]bool{})
-	} else {
-		a.app.SanitizeProfile(user, a.permissions.HasPermissionTo(session.UserID, model.PermissionManageSystem))
-	}
+	// if userID == session.UserID {
+	// 	user.Sanitize(map[string]bool{})
+	// } else {
+	// 	a.app.SanitizeProfile(user, a.permissions.HasPermissionTo(session.UserID, model.PermissionManageSystem))
+	// }
 
 	userData, err := json.Marshal(user)
 	if err != nil {

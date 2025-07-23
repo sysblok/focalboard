@@ -625,20 +625,11 @@ func (a *API) handleChangeUserPassword(w http.ResponseWriter, r *http.Request) {
 
 	currentUserID := getUserID(r)
 
-	currentUser, err := a.app.GetUser(currentUserID)
+	// MVP: Hardcoded admin usernames (consistent with frontend)
+	isAdmin, err := a.isHardcodedAdmin(currentUserID)
 	if err != nil {
 		a.errorResponse(w, r, err)
 		return
-	}
-
-	// MVP: Hardcoded admin usernames (consistent with frontend)
-	adminUsers := []string{"admin", "bulgak0v", "nastasia75", "user"}
-	isAdmin := false
-	for _, admin := range adminUsers {
-		if currentUser.Username == admin {
-			isAdmin = true
-			break
-		}
 	}
 
 	if !isAdmin {
@@ -766,4 +757,19 @@ func (a *API) adminRequired(handler func(w http.ResponseWriter, r *http.Request)
 
 		handler(w, r)
 	}
+}
+
+func (a *API) isHardcodedAdmin(userID string) (bool, error) {
+	user, err := a.app.GetUser(userID)
+	if err != nil {
+		return false, err
+	}
+
+	hardcodedAdmins := []string{"admin", "bulgak0v", "nastasia75", "user"}
+	for _, adminUsername := range hardcodedAdmins {
+		if user.Username == adminUsername {
+			return true, nil
+		}
+	}
+	return false, nil
 }
