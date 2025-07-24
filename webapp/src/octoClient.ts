@@ -1138,9 +1138,7 @@ class OctoClient {
     }
 }
 
-const
-
-octoClient = new OctoClient()
+const octoClient = new OctoClient()
 
 export {OctoClient}
 export default octoClient
