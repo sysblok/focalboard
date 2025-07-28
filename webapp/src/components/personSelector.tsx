@@ -12,7 +12,7 @@ import {getSelectBaseStyle} from '../theme'
 import {IUser} from '../user'
 import {Utils} from '../utils'
 import {useAppSelector} from '../store/hooks'
-import {getBoardUsers, getBoardUsersList, getMe} from '../store/users'
+import {getBoardUsers, getBoardUsersListWithSticky, getBoardUsersList, getMe} from '../store/users'
 
 import {ClientConfig} from '../config/clientConfig'
 import {getClientConfig} from '../store/clientConfig'
@@ -75,8 +75,10 @@ const PersonSelector = (props: Props): JSX.Element => {
     const clientConfig = useAppSelector<ClientConfig>(getClientConfig)
     const intl = useIntl()
 
+    const stickedUsers: string[] = []
+
     const boardUsersById = useAppSelector<{[key: string]: IUser}>(getBoardUsers)
-    const boardUsers = useAppSelector<IUser[]>(getBoardUsersList)
+    const boardUsers = useAppSelector<IUser[]>((state) => getBoardUsersListWithSticky(state, stickedUsers));
     const boardUsersKey = Object.keys(boardUsersById) ? Utils.hashCode(JSON.stringify(Object.keys(boardUsersById))) : 0
     const me = useAppSelector<IUser|null>(getMe)
 
