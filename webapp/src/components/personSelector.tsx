@@ -75,8 +75,7 @@ const PersonSelector = (props: Props): JSX.Element => {
     const clientConfig = useAppSelector<ClientConfig>(getClientConfig)
     const intl = useIntl()
 
-    const stickedUsers: string[] = []
-
+    const stickedUsers: string[] = ['bulgak0v', 'g.-ekaterina', 'alexeyqu', 'daria_u', 'danya_s', 'kolpashchikova', 'olya_dushkina', 'michael_deev', 'diidary', 'riyatriana.rivera', 'kimihail', 'affendi', 'annaoskina2']
     const boardUsersById = useAppSelector<{[key: string]: IUser}>(getBoardUsers)
     const boardUsers = useAppSelector<IUser[]>((state) => getBoardUsersListWithSticky(state, stickedUsers));
     const boardUsersKey = Object.keys(boardUsersById) ? Utils.hashCode(JSON.stringify(Object.keys(boardUsersById))) : 0
