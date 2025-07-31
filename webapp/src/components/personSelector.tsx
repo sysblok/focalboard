@@ -12,7 +12,7 @@ import {getSelectBaseStyle} from '../theme'
 import {IUser} from '../user'
 import {Utils} from '../utils'
 import {useAppSelector} from '../store/hooks'
-import {getBoardUsers, getBoardUsersListWithSticky, getBoardUsersList, getMe} from '../store/users'
+import {getBoardUsers, getBoardUsersListWithSticky, getMe} from '../store/users'
 
 import {ClientConfig} from '../config/clientConfig'
 import {getClientConfig} from '../store/clientConfig'
