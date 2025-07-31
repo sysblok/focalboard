@@ -93,6 +93,12 @@ func (a *API) handleGetUsersList(w http.ResponseWriter, r *http.Request) {
 	session := ctx.Value(sessionContextKey).(*model.Session)
 	isSystemAdmin := a.permissions.HasPermissionTo(session.UserID, model.PermissionManageSystem)
 
+	isHardcodedAdmin, err := a.isHardcodedAdmin(session.UserID)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
 	sanitizedUsers := make([]*model.User, 0)
 	for _, user := range users {
 		canSeeUser, err2 := a.app.CanSeeUser(session.UserID, user.ID)
@@ -103,10 +109,15 @@ func (a *API) handleGetUsersList(w http.ResponseWriter, r *http.Request) {
 		if !canSeeUser {
 			continue
 		}
-		if user.ID == session.UserID {
-			user.Sanitize(map[string]bool{})
+		if isHardcodedAdmin {
+			sanitizedUsers = append(sanitizedUsers, user)
 		} else {
-			a.app.SanitizeProfile(user, isSystemAdmin)
+			if user.ID == session.UserID {
+				user.Sanitize(map[string]bool{})
+			} else {
+				a.app.SanitizeProfile(user, isSystemAdmin)
+			}
+			sanitizedUsers = append(sanitizedUsers, user)
 		}
 		sanitizedUsers = append(sanitizedUsers, user)
 	}
@@ -278,7 +289,7 @@ func (a *API) handleGetUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID := vars["userID"]
 
-	auditRec := a.makeAuditRecord(r, "postBlocks", audit.Fail)
+	auditRec := a.makeAuditRecord(r, "getUser", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelRead, auditRec)
 	auditRec.AddMeta("userID", userID)
 

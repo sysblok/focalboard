@@ -25,7 +25,7 @@ type User struct {
 
 	// The user's email
 	// required: true
-	Email string `json:"-"`
+	Email string `json:"email"`
 
 	// The user's nickname
 	Nickname string `json:"nickname"`
