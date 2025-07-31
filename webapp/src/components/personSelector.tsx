@@ -67,6 +67,10 @@ const selectStyles = {
         background: 'rgb(var(--center-channel-bg-rgb))',
         minWidth: '260px',
     }),
+    menuList: (provided: CSSObject): CSSObject => ({
+        ...provided,
+        minHeight: '320px',
+    }),
 }
 
 const PersonSelector = (props: Props): JSX.Element => {
