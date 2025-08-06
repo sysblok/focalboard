@@ -1,6 +1,6 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
-import React, {useCallback} from 'react'
+import React, {useCallback, useEffect} from 'react'
 import {useHistory, useLocation} from 'react-router-dom'
 import {FormattedMessage} from 'react-intl'
 
@@ -46,9 +46,12 @@ const ErrorPage = () => {
         )
     })
 
-    if (!Utils.isFocalboardPlugin() && errid === ErrorId.NotLoggedIn) {
-        handleButtonClick(errorDef.button1Redirect)
-    }
+    // Handle automatic redirect for NotLoggedIn error
+    useEffect(() => {
+        if (!Utils.isFocalboardPlugin() && errid === ErrorId.NotLoggedIn) {
+            handleButtonClick(errorDef.button1Redirect)
+        }
+    }, [errid, errorDef.button1Redirect, handleButtonClick])
 
     return (
         <div className='ErrorPage'>

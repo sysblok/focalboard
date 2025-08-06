@@ -1,36 +1,54 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 import React, {useState} from 'react'
-import {Link, Redirect, useLocation, useHistory} from 'react-router-dom'
-import {FormattedMessage} from 'react-intl'
+import {Redirect, useHistory, useLocation} from 'react-router-dom'
 
+import Form from '../components/form/form'
+import Layout from '../components/layout/layout'
 import {useAppDispatch, useAppSelector} from '../store/hooks'
 import {fetchMe, getLoggedIn} from '../store/users'
-
-import Button from '../widgets/buttons/button'
 import client from '../octoClient'
-import './loginPage.scss'
 
 const LoginPage = () => {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
-    const [errorMessage, setErrorMessage] = useState('')
+    const [errorMessage, setErrorMessage] = useState<{messageId: string, defaultMessage: string} | null>(null)
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const dispatch = useAppDispatch()
     const loggedIn = useAppSelector<boolean|null>(getLoggedIn)
     const queryParams = new URLSearchParams(useLocation().search)
     const history = useHistory()
 
     const handleLogin = async (): Promise<void> => {
-        const logged = await client.login(username, password)
-        if (logged) {
-            await dispatch(fetchMe())
-            if (queryParams) {
-                history.push(queryParams.get('r') || '/')
+        setIsSubmitting(true)
+        setErrorMessage(null)
+
+        try {
+            const logged = await client.login(username, password)
+            if (logged) {
+                await dispatch(fetchMe())
+                const redirectTo = queryParams.get('r') || '/'
+                history.push(redirectTo)
             } else {
-                history.push('/')
+                setErrorMessage({
+                    messageId: 'login.log-in-error',
+                    defaultMessage: 'Login failed'
+                })
             }
-        } else {
-            setErrorMessage('Login failed')
+        } catch (error) {
+            setErrorMessage({
+                messageId: 'login.log-in-error',
+                defaultMessage: 'Login failed'
+            })
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
+    const clearErrorOnChange = (value: string, setter: (value: string) => void) => {
+        setter(value)
+        if (errorMessage) {
+            setErrorMessage(null)
         }
     }
 
@@ -38,65 +56,48 @@ const LoginPage = () => {
         return <Redirect to={'/'}/>
     }
 
+    const formFields = [
+        {
+            id: 'login-username',
+            placeholder: 'Enter username',
+            value: username,
+            onChange: (value: string) => clearErrorOnChange(value, setUsername)
+        },
+        {
+            id: 'login-password',
+            type: 'password',
+            placeholder: 'Enter password',
+            value: password,
+            onChange: (value: string) => clearErrorOnChange(value, setPassword)
+        }
+    ]
+
+    const formLinks = [
+        {
+            to: '/register',
+            messageId: 'login.register-button',
+            defaultMessage: 'or create an account if you don\'t have one'
+        },
+    ]
+
     return (
-        <div className='LoginPage'>
-            <form
-                onSubmit={(e: React.FormEvent) => {
-                    e.preventDefault()
-                    handleLogin()
+        <Layout>
+            <Form
+                title={{
+                    messageId: 'login.log-in-title',
+                    defaultMessage: 'Log in'
                 }}
-            >
-                <div className='title'>
-                    <FormattedMessage
-                        id='login.log-in-title'
-                        defaultMessage='Log in'
-                    />
-                </div>
-                <div className='username'>
-                    <input
-                        id='login-username'
-                        placeholder={'Enter username'}
-                        value={username}
-                        onChange={(e) => {
-                            setUsername(e.target.value)
-                            setErrorMessage('')
-                        }}
-                    />
-                </div>
-                <div className='password'>
-                    <input
-                        id='login-password'
-                        type='password'
-                        placeholder={'Enter password'}
-                        value={password}
-                        onChange={(e) => {
-                            setPassword(e.target.value)
-                            setErrorMessage('')
-                        }}
-                    />
-                </div>
-                <Button
-                    filled={true}
-                    submit={true}
-                >
-                    <FormattedMessage
-                        id='login.log-in-button'
-                        defaultMessage='Log in'
-                    />
-                </Button>
-            </form>
-            <Link to='/register'>
-                <FormattedMessage
-                    id='login.register-button'
-                    defaultMessage={'or create an account if you don\'t have one'}
-                />
-            </Link>
-            {errorMessage &&
-                <div className='error'>
-                    {errorMessage}
-                </div>
-            }
-        </div>
+                fields={formFields}
+                submitButton={{
+                    messageId: 'login.log-in-button',
+                    defaultMessage: 'Log in'
+                }}
+                links={formLinks}
+                errorMessage={errorMessage}
+                onSubmit={handleLogin}
+                isSubmitting={isSubmitting}
+            />
+        </Layout>
     )
 }
 
