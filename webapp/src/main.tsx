@@ -1,6 +1,6 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
-import React from 'react'
+import React, {useEffect} from 'react'
 import ReactDOM from 'react-dom'
 import {Provider as ReduxProvider} from 'react-redux'
 import {store as emojiMartStore} from 'emoji-mart'
@@ -34,11 +34,16 @@ const MainApp = () => {
     const me = useAppSelector<IUser|null>(getMe)
     const clientConfig = useAppSelector(getClientConfig)
 
-    if (clientConfig.featureFlags['FOCALBOARD_ENVIRONMENT'] != 'prod') {
-        // TODO also set this when changing a theme
-        // for some reason useAppSelector doesn't work in theme.ts
-        document.documentElement.style.setProperty('--sidebar-bg-rgb', '92, 50, 30')
-    }
+    useEffect(() => {
+        if (clientConfig.featureFlags['FOCALBOARD_ENVIRONMENT'] != 'prod') {
+            // TODO also set this when changing a theme
+            // for some reason useAppSelector doesn't work in theme.ts
+            document.documentElement.style.setProperty('--sidebar-bg-rgb', '92, 50, 30')
+        } else {
+            document.documentElement.style.setProperty('--sidebar-bg-rgb', '30, 50, 92')
+        }
+    }, [clientConfig.featureFlags['FOCALBOARD_ENVIRONMENT']])
+
 
     return (
         <WithWebSockets userId={me?.id}>
