@@ -160,7 +160,16 @@ const PersonSelector = (props: Props): JSX.Element => {
                 usersInsideBoard.push(u)
             }
         }
-        return usersInsideBoard;
+
+        const stickedApiUsers = stickedUsers
+            .map(username => usersInsideBoard.find(user => user.username === username))
+            .filter(Boolean) as IUser[]
+
+        const remainingApiUsers = usersInsideBoard
+            .filter(user => !stickedUsers.includes(user.username))
+            .sort((a, b) => a.username.localeCompare(b.username))
+
+        return [...stickedApiUsers, ...remainingApiUsers]
     }, [boardUsers, allowAddUsers, boardUsersById, me])
 
     let primaryClass = 'Person'
