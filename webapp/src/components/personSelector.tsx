@@ -1,7 +1,7 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useCallback} from 'react'
+import React, {useCallback, useMemo} from 'react'
 import {useIntl} from 'react-intl'
 import Select from 'react-select/async'
 import {CSSObject} from '@emotion/serialize'
@@ -12,7 +12,7 @@ import {getSelectBaseStyle} from '../theme'
 import {IUser} from '../user'
 import {Utils} from '../utils'
 import {useAppSelector} from '../store/hooks'
-import {getBoardUsers, getBoardUsersListWithSticky, getMe} from '../store/users'
+import {getBoardUsers, getBoardUsersList, getMe} from '../store/users'
 
 import {ClientConfig} from '../config/clientConfig'
 import {getClientConfig} from '../store/clientConfig'
@@ -73,6 +73,22 @@ const selectStyles = {
     }),
 }
 
+const applyStickyUserSorting = (users: IUser[], stickyUsernames: string[]): IUser[] => {
+    if (stickyUsernames.length === 0) {
+        return users.sort((a, b) => a.username.localeCompare(b.username))
+    }
+
+    const stickyUsers = stickyUsernames
+        .map(username => users.find(user => user.username === username))
+        .filter(Boolean) as IUser[]
+
+    const remainingUsers = users
+        .filter(user => !stickyUsernames.includes(user.username))
+        .sort((a, b) => a.username.localeCompare(b.username))
+
+    return [...stickyUsers, ...remainingUsers]
+}
+
 const PersonSelector = (props: Props): JSX.Element => {
     const {readOnly, userIDs, allowAddUsers, isMulti, closeMenuOnSelect = true, emptyDisplayValue, showMe = false, onChange} = props
 
@@ -81,9 +97,11 @@ const PersonSelector = (props: Props): JSX.Element => {
 
     const stickedUsers: string[] = ['bulgak0v', 'g.-ekaterina', 'alexeyqu', 'daria_u', 'danya_s', 'kolpashchikova', 'olya_dushkina', 'michael_deev', 'diidary', 'riyatriana.rivera', 'kimihail', 'affendi', 'annaoskina2']
     const boardUsersById = useAppSelector<{[key: string]: IUser}>(getBoardUsers)
-    const boardUsers = useAppSelector<IUser[]>((state) => getBoardUsersListWithSticky(state, stickedUsers));
+    const boardUsersRaw = useAppSelector<IUser[]>(getBoardUsersList)
     const boardUsersKey = Object.keys(boardUsersById) ? Utils.hashCode(JSON.stringify(Object.keys(boardUsersById))) : 0
     const me = useAppSelector<IUser|null>(getMe)
+
+    const boardUsers = useMemo(() => applyStickyUserSorting(boardUsersRaw, stickedUsers), [boardUsersRaw, stickedUsers])
 
     const formatOptionLabel = (user: any): JSX.Element => {
         if (!user) {
@@ -161,15 +179,7 @@ const PersonSelector = (props: Props): JSX.Element => {
             }
         }
 
-        const stickedApiUsers = stickedUsers
-            .map(username => usersInsideBoard.find(user => user.username === username))
-            .filter(Boolean) as IUser[]
-
-        const remainingApiUsers = usersInsideBoard
-            .filter(user => !stickedUsers.includes(user.username))
-            .sort((a, b) => a.username.localeCompare(b.username))
-
-        return [...stickedApiUsers, ...remainingApiUsers]
+        return applyStickyUserSorting(usersInsideBoard, stickedUsers)
     }, [boardUsers, allowAddUsers, boardUsersById, me])
 
     let primaryClass = 'Person'
