@@ -1,12 +1,7 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import {
-    createSlice,
-    createAsyncThunk,
-    PayloadAction,
-    createSelector,
-} from '@reduxjs/toolkit'
+import {createSlice, createAsyncThunk, PayloadAction, createSelector} from '@reduxjs/toolkit'
 
 import {default as client} from '../octoClient'
 import {IUser, parseUserProps, UserPreference} from '../user'
@@ -19,28 +14,30 @@ import {initialLoad} from './initialLoad'
 
 import {RootState} from './index'
 
-export const fetchMe = createAsyncThunk('users/fetchMe', async () => {
-    const [me, myConfig] = await Promise.all([
-        client.getMe(),
-        client.getMyConfig(),
-    ])
-    return {me, myConfig}
-})
+export const fetchMe = createAsyncThunk(
+    'users/fetchMe',
+    async () => {
+        const [me, myConfig] = await Promise.all([
+            client.getMe(),
+            client.getMyConfig(),
+        ])
+        return {me, myConfig}
+    },
+)
 
 export const versionProperty = 'version72MessageCanceled'
 
 type UsersStatus = {
-    me: IUser | null
-    boardUsers: { [key: string]: IUser }
-    loggedIn: boolean | null
+    me: IUser|null
+    boardUsers: {[key: string]: IUser}
+    loggedIn: boolean|null
     blockSubscriptions: Subscription[]
     myConfig: Record<string, UserPreference>
 }
 
 export const fetchUserBlockSubscriptions = createAsyncThunk(
     'user/blockSubscriptions',
-    async (userId: string) =>
-        (Utils.isFocalboardPlugin() ? client.getUserBlockSubscriptions(userId) : []),
+    async (userId: string) => (Utils.isFocalboardPlugin() ? client.getUserBlockSubscriptions(userId) : []),
 )
 
 const initialState = {
@@ -56,18 +53,15 @@ const usersSlice = createSlice({
     name: 'users',
     initialState,
     reducers: {
-        setMe: (state, action: PayloadAction<IUser | null>) => {
+        setMe: (state, action: PayloadAction<IUser|null>) => {
             state.me = action.payload
             state.loggedIn = Boolean(state.me)
         },
         setBoardUsers: (state, action: PayloadAction<IUser[]>) => {
-            state.boardUsers = action.payload.reduce(
-                (acc: { [key: string]: IUser }, user: IUser) => {
-                    acc[user.id] = user
-                    return acc
-                },
-                {},
-            )
+            state.boardUsers = action.payload.reduce((acc: {[key: string]: IUser}, user: IUser) => {
+                acc[user.id] = user
+                return acc
+            }, {})
         },
         addBoardUsers: (state, action: PayloadAction<IUser[]>) => {
             action.payload.forEach((user: IUser) => {
@@ -84,10 +78,7 @@ const usersSlice = createSlice({
         },
         unfollowBlock: (state, action: PayloadAction<Subscription>) => {
             const oldSubscriptions = state.blockSubscriptions
-            state.blockSubscriptions = oldSubscriptions.filter(
-                (subscription) =>
-                    subscription.blockId !== action.payload.blockId,
-            )
+            state.blockSubscriptions = oldSubscriptions.filter((subscription) => subscription.blockId !== action.payload.blockId)
         },
         patchProps: (state, action: PayloadAction<UserPreference[]>) => {
             state.myConfig = parseUserProps(action.payload)
@@ -115,12 +106,9 @@ const usersSlice = createSlice({
         //     }, {})
         // })
 
-        builder.addCase(
-            fetchUserBlockSubscriptions.fulfilled,
-            (state, action) => {
-                state.blockSubscriptions = action.payload
-            },
-        )
+        builder.addCase(fetchUserBlockSubscriptions.fulfilled, (state, action) => {
+            state.blockSubscriptions = action.payload
+        })
 
         builder.addCase(initialLoad.fulfilled, (state, action) => {
             if (action.payload.myConfig) {
@@ -130,44 +118,27 @@ const usersSlice = createSlice({
     },
 })
 
-export const {
-    setMe,
-    setBoardUsers,
-    removeBoardUsersById,
-    addBoardUsers,
-    followBlock,
-    unfollowBlock,
-    patchProps,
-} = usersSlice.actions
+export const {setMe, setBoardUsers, removeBoardUsersById, addBoardUsers, followBlock, unfollowBlock, patchProps} = usersSlice.actions
 export const {reducer} = usersSlice
 
-export const getMe = (state: RootState): IUser | null => state.users.me
-export const getLoggedIn = (state: RootState): boolean | null =>
-    state.users.loggedIn
-export const getBoardUsers = (state: RootState): { [key: string]: IUser } =>
-    state.users.boardUsers
-export const getMyConfig = (state: RootState): Record<string, UserPreference> =>
-    state.users.myConfig || ({} as Record<string, UserPreference>)
+export const getMe = (state: RootState): IUser|null => state.users.me
+export const getLoggedIn = (state: RootState): boolean|null => state.users.loggedIn
+export const getBoardUsers = (state: RootState): {[key: string]: IUser} => state.users.boardUsers
+export const getMyConfig = (state: RootState): Record<string, UserPreference> => state.users.myConfig || {} as Record<string, UserPreference>
 
-export const getBoardUsersList = createSelector(getBoardUsers, (boardUsers) =>
-    Object.values(boardUsers).sort((a, b) =>
-        a.username.localeCompare(b.username),
-    ),
+export const getBoardUsersList = createSelector(
+    getBoardUsers,
+    (boardUsers) => Object.values(boardUsers).sort((a, b) => a.username.localeCompare(b.username)),
 )
 
 export const getBoardUsersListWithSticky = createSelector(
-    [
-        getBoardUsers,
-        (state: RootState, stickedUsernames: string[]) => stickedUsernames,
-    ],
+    [getBoardUsers, (state: RootState, stickedUsernames: string[]) => stickedUsernames],
     (boardUsers, stickedUsernames) => {
         const allUsers = Object.values(boardUsers)
 
         // Get sticked users in their fixed order
         const stickedUsers = stickedUsernames.
-            map((username) =>
-                allUsers.find((user) => user.username === username),
-            ).
+            map((username) => allUsers.find((user) => user.username === username)).
             filter(Boolean) as IUser[]
 
         // Get remaining users and sort alphabetically
@@ -179,10 +150,8 @@ export const getBoardUsersListWithSticky = createSelector(
     },
 )
 
-export const getUser = (
-    userId: string,
-): ((state: RootState) => IUser | undefined) => {
-    return (state: RootState): IUser | undefined => {
+export const getUser = (userId: string): (state: RootState) => IUser|undefined => {
+    return (state: RootState): IUser|undefined => {
         const users = getBoardUsers(state)
         return users[userId]
     }
@@ -212,8 +181,7 @@ export const getOnboardingTourStep = createSelector(
 
 export const getOnboardingTourCategory = createSelector(
     getMyConfig,
-    (myConfig): string =>
-        (myConfig.tourCategory ? myConfig.tourCategory.value : ''),
+    (myConfig): string => (myConfig.tourCategory ? myConfig.tourCategory.value : ''),
 )
 
 export const getVersionMessageCanceled = createSelector(
@@ -251,27 +219,26 @@ export const getCardHiddenWarningSnoozeUntil = createSelector(
             return 0
         }
         try {
-            return parseInt(
-                myConfig.cardHiddenWarningSnoozeUntil?.value || 0,
-                10,
-            )
+            return parseInt(myConfig.cardHiddenWarningSnoozeUntil?.value || 0, 10)
         } catch (_) {
             return 0
         }
     },
 )
 
-export const isAdmin = createSelector(getMe, (user): boolean => {
-    if (!user) {
-        return false
-    }
-    const adminUsernames = [
-        'admin',
-        'bulgak0v',
-        'nastasia75',
-        'tam',
-        'olya_dushkina',
-    ]
+export const isAdmin = createSelector(
+    getMe,
+    (user): boolean => {
+        if (!user) {
+            return false
+        }
+        const adminUsernames = [
+            'admin',
+            'bulgak0v',
+            'nastasia75',
+            'tam',
+            'olya_dushkina',
+        ]
 
-    return adminUsernames.includes(user.username)
-})
+        return adminUsernames.includes(user.username)
+    })
