@@ -13,7 +13,6 @@ import {UserSettings} from './userSettings'
 import {IUser} from './user'
 import {getMe} from './store/users'
 import {useAppSelector} from './store/hooks'
-import {getClientConfig} from './store/clientConfig'
 
 import '@mattermost/compass-icons/css/compass-icons.css'
 
@@ -32,17 +31,14 @@ initThemes()
 
 const MainApp = () => {
     const me = useAppSelector<IUser|null>(getMe)
-    const clientConfig = useAppSelector(getClientConfig)
 
-    useEffect(() => {
-        if (clientConfig.featureFlags['FOCALBOARD_ENVIRONMENT'] != 'prod') {
-            // TODO also set this when changing a theme
-            // for some reason useAppSelector doesn't work in theme.ts
-            document.documentElement.style.setProperty('--sidebar-bg-rgb', '92, 50, 30')
-        } else {
-            document.documentElement.style.setProperty('--sidebar-bg-rgb', '30, 50, 92')
-        }
-    }, [clientConfig.featureFlags['FOCALBOARD_ENVIRONMENT']])
+    const environment = process.env.FOCALBOARD_ENVIRONMENT
+
+    if (environment !== 'prod') {
+        document.documentElement.style.setProperty('--sidebar-bg-rgb', '92, 50, 30')
+    } else {
+        document.documentElement.style.setProperty('--sidebar-bg-rgb', '30, 50, 92')
+    }
 
 
     return (
