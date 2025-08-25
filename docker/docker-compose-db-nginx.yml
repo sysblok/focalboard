@@ -7,6 +7,7 @@ services:
       dockerfile: docker/Dockerfile
       args:
         FOCALBOARD_ENVIRONMENT: ${FOCALBOARD_ENVIRONMENT:-prod}
+        FOCALBOARD_ADMINS: ${FOCALBOARD_ADMINS:-}
     container_name: focalboard
     depends_on:
       - focalboard-db

@@ -33,6 +33,7 @@ services:
       dockerfile: docker/Dockerfile.front.dev
       args:
         FOCALBOARD_ENVIRONMENT: ${FOCALBOARD_ENVIRONMENT:-dev}
+        FOCALBOARD_ADMINS: ${FOCALBOARD_ADMINS:-}
     container_name: focalboard-front
     volumes:
       - ../webapp/src:/webapp/src
