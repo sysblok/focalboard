@@ -121,11 +121,6 @@ func ReadConfigFile(configFilePath string) (*Configuration, error) {
 		return nil, err
 	}
 
-	env := os.Getenv("FOCALBOARD_ENVIRONMENT")
-	if env != "" {
-		configuration.FeatureFlags["FOCALBOARD_ENVIRONMENT"] = env
-	}
-
 	log.Println("readConfigFile")
 	log.Printf("%+v", removeSecurityData(configuration))
 
