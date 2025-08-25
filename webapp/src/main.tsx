@@ -13,6 +13,7 @@ import {UserSettings} from './userSettings'
 import {IUser} from './user'
 import {getMe} from './store/users'
 import {useAppSelector} from './store/hooks'
+import { isProduction } from './config/envConfig'
 
 import '@mattermost/compass-icons/css/compass-icons.css'
 
@@ -32,14 +33,11 @@ initThemes()
 const MainApp = () => {
     const me = useAppSelector<IUser|null>(getMe)
 
-    const environment = process.env.FOCALBOARD_ENVIRONMENT
-
-    if (environment !== 'prod') {
+    if (!isProduction) {
         document.documentElement.style.setProperty('--sidebar-bg-rgb', '92, 50, 30')
     } else {
         document.documentElement.style.setProperty('--sidebar-bg-rgb', '30, 50, 92')
     }
-
 
     return (
         <WithWebSockets userId={me?.id}>

@@ -14,6 +14,7 @@ import MenuWrapper from '../../widgets/menuWrapper'
 import {getMe, isAdmin, setMe} from '../../store/users'
 import {useAppSelector, useAppDispatch} from '../../store/hooks'
 import {Utils} from '../../utils'
+import {isProduction} from '../../config/envConfig'
 
 import ModalWrapper from '../modalWrapper'
 
@@ -43,7 +44,7 @@ const SidebarUserMenu = () => {
                     <div className='logo'>
                         <div className='logo-title'>
                             <FocalboardLogoIcon/>
-                            <span>{process.env.FOCALBOARD_ENVIRONMENT == 'prod' ? 'Борда' : 'Focalboard'}</span>
+                            <span>{isProduction ? 'Борда' : 'Focalboard'}</span>
                             <div className='versionFrame'>
                                 <div
                                     className='version'

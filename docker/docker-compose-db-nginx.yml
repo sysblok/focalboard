@@ -31,7 +31,7 @@ services:
     container_name: focalboard-proxy
     restart: always
     ports:
-      - "8081:80"
+      - "80:80"
       - "443:443"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
