@@ -1,6 +1,11 @@
 ### Webapp build
 FROM node:16.3.0@sha256:ca6daf1543242acb0ca59ff425509eab7defb9452f6ae07c156893db06c7a9a4 as nodebuild
 
+# Accept build argument
+ARG FOCALBOARD_ENVIRONMENT=dev
+# Make it available to the build process and runtime
+ENV FOCALBOARD_ENVIRONMENT=$FOCALBOARD_ENVIRONMENT
+
 WORKDIR /webapp
 # package.json is required by npm at build stage
 # need additional setup for node_modules

@@ -5,6 +5,8 @@ services:
     build:
       context: ../
       dockerfile: docker/Dockerfile
+      args:
+        FOCALBOARD_ENVIRONMENT: ${FOCALBOARD_ENVIRONMENT:-prod}
     container_name: focalboard
     depends_on:
       - focalboard-db
@@ -58,7 +60,7 @@ services:
     restart: "always"
     depends_on:
       - "proxy"
-    networks: 
+    networks:
       - proxy
 
   focalboard-db:

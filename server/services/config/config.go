@@ -2,7 +2,6 @@ package config
 
 import (
 	"log"
-	"os"
 
 	"github.com/spf13/viper"
 )
@@ -119,11 +118,6 @@ func ReadConfigFile(configFilePath string) (*Configuration, error) {
 	err = viper.Unmarshal(&configuration)
 	if err != nil {
 		return nil, err
-	}
-
-	env := os.Getenv("FOCALBOARD_ENVIRONMENT")
-	if env != "" {
-		configuration.FeatureFlags["FOCALBOARD_ENVIRONMENT"] = env
 	}
 
 	log.Println("readConfigFile")

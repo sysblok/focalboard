@@ -31,6 +31,8 @@ services:
     build:
       context: ../
       dockerfile: docker/Dockerfile.front.dev
+      args:
+        FOCALBOARD_ENVIRONMENT: ${FOCALBOARD_ENVIRONMENT:-dev}
     container_name: focalboard-front
     volumes:
       - ../webapp/src:/webapp/src

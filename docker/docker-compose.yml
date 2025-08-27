@@ -4,6 +4,8 @@ services:
     build:
       context: ../
       dockerfile: docker/Dockerfile
+      args:
+        FOCALBOARD_ENVIRONMENT: ${FOCALBOARD_ENVIRONMENT:-prod}
     container_name: focalboard
     volumes:
       - fbdata:/opt/focalboard/data
