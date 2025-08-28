@@ -6,6 +6,8 @@ services:
     build:
       context: ../
       dockerfile: docker/Dockerfile.back.dev
+      args:
+        FOCALBOARD_ADMINS: ${FOCALBOARD_ADMINS:-}
     container_name: focalboard-back
     depends_on:
       - focalboard-db
@@ -16,6 +18,7 @@ services:
       - VIRTUAL_HOST=${FOCALBOARD_HOST}
       - LETSENCRYPT_HOST=${FOCALBOARD_HOST}
       - FOCALBOARD_ENVIRONMENT=${FOCALBOARD_ENVIRONMENT:-dev}
+      - FOCALBOARD_ADMINS=${FOCALBOARD_ADMINS:-}
       - VIRTUAL_PORT=8000
       - VIRTUAL_PROTO=http
     volumes:
