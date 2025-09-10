@@ -765,8 +765,7 @@ func (a *API) isHardcodedAdmin(userID string) (bool, error) {
 		return false, err
 	}
 
-	hardcodedAdmins := []string{"admin", "bulgak0v", "nastasia75", "tam",
-        "olya_dushkina",}
+	hardcodedAdmins := a.app.GetConfig().Admins
 	for _, adminUsername := range hardcodedAdmins {
 		if user.Username == adminUsername {
 			return true, nil

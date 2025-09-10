@@ -5,6 +5,7 @@ import {createSlice, createAsyncThunk, PayloadAction, createSelector} from '@red
 
 import {default as client} from '../octoClient'
 import {IUser, parseUserProps, UserPreference} from '../user'
+import {adminUsernames} from '../config/envConfig'
 
 import {Utils} from '../utils'
 
@@ -210,16 +211,6 @@ export const getCardHiddenWarningSnoozeUntil = createSelector(
 export const isAdmin = createSelector(
     getMe,
     (user): boolean => {
-        if (!user) {
-            return false
-        }
-        const adminUsernames = [
-            'admin',
-            'bulgak0v',
-            'nastasia75',
-            'tam',
-            'olya_dushkina',
-        ]
-
+    if (!user) return false;
         return adminUsernames.includes(user.username)
     })

@@ -104,6 +104,7 @@ function makeCommonConfig() {
             }),
             new webpack.DefinePlugin({
                 'process.env.FOCALBOARD_ENVIRONMENT': JSON.stringify(process.env.FOCALBOARD_ENVIRONMENT || 'dev'),
+                'process.env.FOCALBOARD_ADMINS': JSON.stringify(process.env.FOCALBOARD_ADMINS || ''),
             }),
         ],
         entry: ['./src/main.tsx', './src/userSettings.ts'],
