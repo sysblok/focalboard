@@ -258,6 +258,7 @@ function DateRange(props: PropertyProps): JSX.Element {
                                 month={dateFrom}
                                 selectedDays={[dateFrom, dateTo ? {from: dateFrom, to: dateTo} : {from: dateFrom, to: dateFrom}]}
                                 modifiers={dateTo ? {start: dateFrom, end: dateTo} : {start: dateFrom, end: dateFrom}}
+                                firstDayOfWeek={1}
                             />
                             <hr/>
                             <SwitchOption

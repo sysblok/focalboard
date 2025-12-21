@@ -1,0 +1,16 @@
+.user {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+
+    &:hover {
+        background: rgba(var(--center-channel-color-rgb), 0.08);
+    }
+
+    .actions {
+        display: flex;
+        gap: 8px;
+    }
+}

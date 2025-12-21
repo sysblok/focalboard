@@ -183,6 +183,7 @@ function DateFilter(props: Props): JSX.Element {
                                 onTodayButtonClick={handleTodayClick}
                                 month={offsetDate}
                                 selectedDays={offsetDate}
+                                firstDayOfWeek={1}
                             />
                             <hr/>
                             <div

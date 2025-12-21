@@ -773,6 +773,7 @@ class Mutator {
 
     // Views
 
+    // function stopped being used after the commit 4906e260 - sort by options only locally
     async changeViewSortOptions(boardId: string, viewId: string, oldSortOptions: ISortOption[], sortOptions: ISortOption[]): Promise<void> {
         await undoManager.perform(
             async () => {

@@ -12,7 +12,7 @@ import {getSelectBaseStyle} from '../theme'
 import {IUser} from '../user'
 import {Utils} from '../utils'
 import {useAppSelector} from '../store/hooks'
-import {getBoardUsers, getBoardUsersList, getMe} from '../store/users'
+import {getBoardUsers, getBoardUsersListWithSticky, getMe} from '../store/users'
 
 import {ClientConfig} from '../config/clientConfig'
 import {getClientConfig} from '../store/clientConfig'
@@ -67,6 +67,10 @@ const selectStyles = {
         background: 'rgb(var(--center-channel-bg-rgb))',
         minWidth: '260px',
     }),
+    menuList: (provided: CSSObject): CSSObject => ({
+        ...provided,
+        minHeight: '320px',
+    }),
 }
 
 const PersonSelector = (props: Props): JSX.Element => {
@@ -75,8 +79,9 @@ const PersonSelector = (props: Props): JSX.Element => {
     const clientConfig = useAppSelector<ClientConfig>(getClientConfig)
     const intl = useIntl()
 
+    const stickedUsers: string[] = ['bulgak0v', 'g.-ekaterina', 'alexeyqu', 'daria_u', 'danya_s', 'kolpashchikova', 'olya_dushkina', 'michael_deev', 'diidary', 'riyatriana.rivera', 'kimihail', 'affendi', 'annaoskina2']
     const boardUsersById = useAppSelector<{[key: string]: IUser}>(getBoardUsers)
-    const boardUsers = useAppSelector<IUser[]>(getBoardUsersList)
+    const boardUsers = useAppSelector<IUser[]>((state) => getBoardUsersListWithSticky(state, stickedUsers));
     const boardUsersKey = Object.keys(boardUsersById) ? Utils.hashCode(JSON.stringify(Object.keys(boardUsersById))) : 0
     const me = useAppSelector<IUser|null>(getMe)
 
@@ -150,18 +155,12 @@ const PersonSelector = (props: Props): JSX.Element => {
         const excludeBots = true
         const allUsers = await client.searchTeamUsers(value, excludeBots)
         const usersInsideBoard: IUser[] = []
-        const usersOutsideBoard: IUser[] = []
         for (const u of allUsers) {
             if (boardUsersById[u.id]) {
                 usersInsideBoard.push(u)
-            } else {
-                usersOutsideBoard.push(u)
             }
         }
-        return [
-            {label: intl.formatMessage({id: 'PersonProperty.board-members', defaultMessage: 'Board members'}), options: usersInsideBoard},
-            {label: intl.formatMessage({id: 'PersonProperty.non-board-members', defaultMessage: 'Not board members'}), options: usersOutsideBoard},
-        ]
+        return usersInsideBoard;
     }, [boardUsers, allowAddUsers, boardUsersById, me])
 
     let primaryClass = 'Person'
@@ -195,12 +194,12 @@ const PersonSelector = (props: Props): JSX.Element => {
                 className={`${primaryClass}${secondaryClass}`}
                 classNamePrefix={'react-select'}
                 formatOptionLabel={formatOptionLabel}
-                styles={selectStyles}
                 placeholder={emptyDisplayValue}
                 getOptionLabel={(o: IUser) => o.username}
                 getOptionValue={(a: IUser) => a.id}
                 value={users}
                 onChange={onChange}
+                styles={selectStyles}
             />
         </>
     )

@@ -291,8 +291,10 @@ const CalendarFullView = (props: Props): JSX.Element|null => {
                 selectable={isSelectable}
                 selectMirror={true}
                 select={onNewEvent}
+                firstDay={1}
             />
-            {showConfirmationDialogBox && <ConfirmationDialogBox dialogBox={confirmDialogProps}/>}
+            {showConfirmationDialogBox && (<ConfirmationDialogBox dialogBox={confirmDialogProps}/>
+            )}
         </div>
     )
 }

@@ -191,3 +191,19 @@ func isValidUsername(username string) error {
 	// TODO: reconsider, always valid
 	return nil
 }
+
+// ChangeUserPasswordRequest is a request to change a user's password by admin
+// swagger:model
+type ChangeUserPasswordRequest struct {
+	// The new password for the user
+	// required: true
+	NewPassword string `json:"newPassword"`
+}
+
+// IsValid validates the change user password request
+func (rd *ChangeUserPasswordRequest) IsValid() error {
+	if rd.NewPassword == "" {
+		return NewErrAuthParam("new password is required")
+	}
+	return isValidPassword(rd.NewPassword)
+}

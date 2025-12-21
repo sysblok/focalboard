@@ -142,7 +142,7 @@ class CardFilter {
             if (filter.values.length === 0) {
                 return true
             }
-            return (value as string || '').includes(filter.values[0]?.toLowerCase())
+            return (value as string || '').toLowerCase().includes(filter.values[0]?.toLowerCase())
         }
         case 'notContains': {
             if (filter.values.length === 0) {

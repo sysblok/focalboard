@@ -3,6 +3,9 @@
 import React, {useCallback} from 'react'
 import {FormattedMessage} from 'react-intl'
 
+import {useAppDispatch} from '../../store/hooks'
+import {updateViewSort} from '../../store/views'
+
 import {IPropertyTemplate} from '../../blocks/board'
 import {BoardView, ISortOption} from '../../blocks/boardView'
 import {Constants} from '../../constants'
@@ -21,6 +24,8 @@ type Props = {
 }
 const ViewHeaderSortMenu = (props: Props) => {
     const {properties, activeView, orderedCards} = props
+    const dispatch = useAppDispatch()
+
     const hasSort = activeView.fields.sortOptions?.length > 0
     const sortDisplayOptions = properties?.map((o) => ({id: o.id, name: o.name}))
     sortDisplayOptions?.unshift({id: Constants.titleColumnId, name: 'Name'})
@@ -37,7 +42,7 @@ const ViewHeaderSortMenu = (props: Props) => {
                 {propertyId, reversed: false},
             ]
         }
-        mutator.changeViewSortOptions(activeView.boardId, activeView.id, activeView.fields.sortOptions, newSortOptions)
+        dispatch(updateViewSort(newSortOptions))
     }, [activeView.id, activeView.fields.sortOptions])
 
     const onManualSort = useCallback(() => {
@@ -50,7 +55,7 @@ const ViewHeaderSortMenu = (props: Props) => {
     }, [activeView, orderedCards])
 
     const onRevertSort = useCallback(() => {
-        mutator.changeViewSortOptions(activeView.boardId, activeView.id, activeView.fields.sortOptions, [])
+        dispatch(updateViewSort([]))
     }, [activeView.id, activeView.fields.sortOptions])
 
     return (

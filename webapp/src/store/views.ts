@@ -4,7 +4,7 @@
 import {createSlice, PayloadAction, createSelector} from '@reduxjs/toolkit'
 import isEqual from 'lodash/isEqual'
 
-import {BoardView, createBoardView} from '../blocks/boardView'
+import {BoardView, ISortOption, createBoardView} from '../blocks/boardView'
 import {FilterGroup} from '../blocks/filterGroup'
 
 import {Utils} from '../utils'
@@ -25,6 +25,9 @@ const smartViewUpdate = (oldView: BoardView, newView: BoardView) => {
         return newView
     }
 
+    // do not use filters from server to avoid unwanted reset to default
+    newView.fields.filter = oldView.fields.filter
+
     if (isEqual(newView.fields.sortOptions, oldView.fields.sortOptions)) {
         newView.fields.sortOptions = oldView.fields.sortOptions
     }
@@ -39,9 +42,6 @@ const smartViewUpdate = (oldView: BoardView, newView: BoardView) => {
     }
     if (isEqual(newView.fields.collapsedOptionIds, oldView.fields.collapsedOptionIds)) {
         newView.fields.collapsedOptionIds = oldView.fields.collapsedOptionIds
-    }
-    if (isEqual(newView.fields.filter, oldView.fields.filter)) {
-        newView.fields.filter = oldView.fields.filter
     }
     if (isEqual(newView.fields.cardOrder, oldView.fields.cardOrder)) {
         newView.fields.cardOrder = oldView.fields.cardOrder
@@ -80,13 +80,17 @@ const viewsSlice = createSlice({
         updateViewFilter: (state, action: PayloadAction<FilterGroup>) => {
             state.views[state.current].fields.filter = action.payload
         },
+        updateViewSort: (state, action: PayloadAction<ISortOption[]>) => {
+            state.views[state.current].fields.sortOptions = action.payload
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(initialReadOnlyLoad.fulfilled, (state, action) => {
             state.views = {}
             for (const block of action.payload.blocks) {
                 if (block.type === 'view') {
-                    state.views[block.id] = block as BoardView
+                    // use default filter then initial data load
+                    state.views[block.id] = {...block, fields: {...block.fields, filter: {filters: [], operation: 'and'} as FilterGroup}} as BoardView
                 }
             }
         })
@@ -94,14 +98,15 @@ const viewsSlice = createSlice({
             state.views = {}
             for (const block of action.payload.blocks) {
                 if (block.type === 'view') {
-                    state.views[block.id] = block as BoardView
+                    // use default filter then initial data load
+                    state.views[block.id] = {...block, fields: {...block.fields, filter: {filters: [], operation: 'and'} as FilterGroup}} as BoardView
                 }
             }
         })
     },
 })
 
-export const {updateViews, setCurrent, updateView, updateViewFilter} = viewsSlice.actions
+export const {updateViews, setCurrent, updateView, updateViewFilter, updateViewSort} = viewsSlice.actions
 export const {reducer} = viewsSlice
 
 export const getViews = (state: RootState): {[key: string]: BoardView} => state.views.views

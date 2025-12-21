@@ -1,14 +1,12 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 /* eslint-disable max-lines */
-import React, {useCallback, useState, useMemo, useEffect} from 'react'
+import React, {useCallback, useState, useMemo, useEffect, useRef} from 'react'
 import {FormattedMessage, injectIntl, IntlShape} from 'react-intl'
 
 import withScrolling, {createHorizontalStrength, createVerticalStrength} from 'react-dnd-scrolling'
 
 import {useAppSelector} from '../../store/hooks'
-
-import {Position} from '../cardDetail/cardDetailContents'
 
 import {Board, IPropertyOption, IPropertyTemplate, BoardGroup} from '../../blocks/board'
 import {Card} from '../../blocks/card'
@@ -17,8 +15,6 @@ import mutator from '../../mutator'
 import {Utils, IDType} from '../../utils'
 import Button from '../../widgets/buttons/button'
 import {Constants, Permission} from '../../constants'
-
-import {dragAndDropRearrange} from '../cardDetail/cardDetailContentsUtility'
 
 import {getCurrentBoardTemplates} from '../../store/cards'
 import BoardPermissionGate from '../permissions/boardPermissionGate'
@@ -30,6 +26,7 @@ import KanbanColumnHeader from './kanbanColumnHeader'
 import KanbanHiddenColumnItem from './kanbanHiddenColumnItem'
 
 import './kanban.scss'
+import {DropTargetMonitor, XYCoord} from 'react-dnd'
 
 type Props = {
     board: Board
@@ -87,9 +84,23 @@ const Kanban = (props: Props) => {
         await mutator.changePropertyOptionValue(board.id, board.cardProperties, groupByProperty!, option, text)
     }, [board, groupByProperty])
 
-    const addGroupClicked = useCallback(async () => {
-        Utils.log('onAddGroupClicked')
+    const insertGroupAtIndex = useCallback(async (newGroup: IPropertyOption, insertIndex: number) => {
+        const visibleOptionIds = visibleGroups.map((o) => o.option.id)
 
+        // Remove the group if it already exists
+        const filteredIds = visibleOptionIds.filter(id => id !== newGroup.id)
+
+        filteredIds.splice(insertIndex, 0, newGroup.id)
+
+        await mutator.changeViewVisibleOptionIds(
+            board.id,
+            activeView.id,
+            activeView.fields.visibleOptionIds,
+            filteredIds
+        )
+    }, [visibleGroups, board.id, activeView.id])
+
+    const addGroupAfter = useCallback(async (afterOptionId: string) => {
         const option: IPropertyOption = {
             id: Utils.createGuid(IDType.BlockID),
             value: 'New group',
@@ -98,10 +109,26 @@ const Kanban = (props: Props) => {
 
         await mutator.insertPropertyOption(board.id, board.cardProperties, groupByProperty!, option, 'add group')
 
-        // Ugly hack to add the new column to the left
-        // Simulate moving it to the place of current first column
-        await onDropToColumn(option, undefined, visibleGroups[0].option, true)
-    }, [board, groupByProperty, visibleGroups])
+        const visibleOptionIds = visibleGroups.map((o) => o.option.id)
+        const insertIndex = visibleOptionIds.indexOf(afterOptionId) + 1
+
+        await insertGroupAtIndex(option, insertIndex)
+    }, [board.id, board.cardProperties, groupByProperty, visibleGroups])
+
+    const addGroupBefore = useCallback(async (beforeOptionId: string) => {
+        const option: IPropertyOption = {
+            id: Utils.createGuid(IDType.BlockID),
+            value: 'New group',
+            color: getRandomPropColor(),
+        }
+
+        await mutator.insertPropertyOption(board.id, board.cardProperties, groupByProperty!, option, 'add group')
+
+        const visibleOptionIds = visibleGroups.map((o) => o.option.id)
+        const insertIndex = Math.max(0, visibleOptionIds.indexOf(beforeOptionId))
+
+        await insertGroupAtIndex(option, insertIndex)
+    }, [board.id, board.cardProperties, groupByProperty, visibleGroups])
 
     const orderAfterMoveToColumn = useCallback((cardIds: string[], columnId?: string): string[] => {
         let cardOrder = activeView.fields.cardOrder.slice()
@@ -118,7 +145,7 @@ const Kanban = (props: Props) => {
         return cardOrder
     }, [activeView, visibleGroups])
 
-    const onDropToColumn = useCallback(async (option: IPropertyOption, card?: Card, dstOption?: IPropertyOption, isColumnNew?: boolean) => {
+    const onDropCardToColumn = useCallback(async (option: IPropertyOption, card?: Card) => {
         const {selectedCardIds} = props
         const optionId = option ? option.id : undefined
 
@@ -147,38 +174,42 @@ const Kanban = (props: Props) => {
                 awaits.push(mutator.changeViewCardOrder(props.board.id, activeView.id, activeView.fields.cardOrder, newOrder, description))
                 await Promise.all(awaits)
             })
-        } else if (dstOption) {
-            Utils.log(`ondrop. Header option: ${dstOption.value}, column: ${option?.value}`)
-
-            const visibleOptionIds = visibleGroups.map((o) => o.option.id)
-
-            // Ugly hack to add the new column to the left
-            // visibleGroups aren't updated in component yet, so add id of new column manually
-            if (isColumnNew) {
-                visibleOptionIds.push(dstOption.id)
-            }
-            const srcBlockX = visibleOptionIds.indexOf(option.id)
-            const dstBlockX = visibleOptionIds.indexOf(dstOption.id)
-
-            // Here aboveRow means to the left while belowRow means to the right
-            const moveTo = (srcBlockX > dstBlockX ? 'aboveRow' : 'belowRow') as Position
-
-            const visibleOptionIdsRearranged = dragAndDropRearrange({
-                contentOrder: visibleOptionIds,
-                srcBlockX,
-                srcBlockY: -1,
-                dstBlockX,
-                dstBlockY: -1,
-                srcBlockId: option.id,
-                dstBlockId: dstOption.id,
-                moveTo,
-            }) as string[]
-
-            await mutator.changeViewVisibleOptionIds(props.board.id, activeView.id, activeView.fields.visibleOptionIds, visibleOptionIdsRearranged)
         }
     }, [cards, visibleGroups, activeView.id, activeView.fields.cardOrder, groupByProperty, props.selectedCardIds])
 
+    const moveColumn = useCallback(async (option: IPropertyOption, dstOption: IPropertyOption, monitor: DropTargetMonitor, ref: React.RefObject<HTMLDivElement>) => {
+
+        const visibleOptionIds = visibleGroups.map((o) => o.option.id)
+        const dragIndex = visibleOptionIds.indexOf(option.id)
+        const hoverIndex = visibleOptionIds.indexOf(dstOption.id)
+
+        if (dragIndex === hoverIndex) {
+            return
+          }
+        // Determine middle of hovered element
+        const hoverBoundingRect = ref.current!.getBoundingClientRect()
+        const hoverMiddleX = (hoverBoundingRect.right - hoverBoundingRect.left) / 2
+
+        // Determine mouse position and get pixels to the left
+        const clientOffset = monitor.getClientOffset()
+        const hoverClientX = (clientOffset as XYCoord).x - hoverBoundingRect.left
+
+        // Only perform the move when the mouse has crossed half of the items width
+        // Dragging right
+        if (dragIndex < hoverIndex && hoverClientX < hoverMiddleX) {
+            return
+        }
+        // Dragging left
+        if (dragIndex > hoverIndex && hoverClientX > hoverMiddleX) {
+            return
+        }
+
+        await insertGroupAtIndex(option, hoverIndex)
+
+    }, [visibleGroups, activeView.id])
+
     const onDropToCard = useCallback(async (srcCard: Card, dstCard: Card) => {
+
         if (srcCard.id === dstCard.id || !groupByProperty) {
             return
         }
@@ -251,22 +282,6 @@ const Kanban = (props: Props) => {
                 className='octo-board-header'
                 id='mainBoardHeader'
             >
-                {/* Add column button */}
-                {!props.readonly &&
-                    <BoardPermissionGate permissions={[Permission.ManageBoardProperties]}>
-                        <div className='octo-board-header-cell narrow'>
-                            <Button
-                                onClick={addGroupClicked}
-                            >
-                                <FormattedMessage
-                                    id='BoardComponent.add-a-group'
-                                    defaultMessage='+ Add a group'
-                                />
-                            </Button>
-                        </div>
-                    </BoardPermissionGate>
-                }
-
                 {/* Column headers */}
                 {visibleGroups.map((group) => (
                     <KanbanColumnHeader
@@ -279,7 +294,9 @@ const Kanban = (props: Props) => {
                         addCard={props.addCard}
                         readonly={props.readonly}
                         propertyNameChanged={propertyNameChanged}
-                        onDropToColumn={onDropToColumn}
+                        moveColumn={moveColumn}
+                        addGroupBefore={addGroupBefore}
+                        addGroupAfter={addGroupAfter}
                         calculationMenuOpen={showCalculationsMenu.get(group.option.id) || false}
                         onCalculationMenuOpen={() => toggleOptions(group.option.id, true)}
                         onCalculationMenuClose={() => toggleOptions(group.option.id, false)}
@@ -304,18 +321,12 @@ const Kanban = (props: Props) => {
                 className='octo-board-body'
                 id='mainBoardBody'
             >
-                {/* Empty column under Add Group Button */}
-                {!props.readonly &&
-                    <BoardPermissionGate permissions={[Permission.ManageBoardProperties]}>
-                        <div className='octo-board-column narrow'/>
-                    </BoardPermissionGate>
-                }
                 {/* Columns */}
 
                 {visibleGroups.map((group) => (
                     <KanbanColumn
                         key={group.option.id || 'empty'}
-                        onDrop={(card: Card) => onDropToColumn(group.option, card)}
+                        onDrop={(card: Card) => onDropCardToColumn(group.option, card)}
                     >
                         {group.cards.map((card) => (
                             <KanbanCard
@@ -364,7 +375,7 @@ const Kanban = (props: Props) => {
                                 activeView={activeView}
                                 intl={props.intl}
                                 readonly={props.readonly}
-                                onDrop={(card: Card) => onDropToColumn(group.option, card)}
+                                onDrop={(card: Card) => onDropCardToColumn(group.option, card)}
                             />
                         ))}
                         {hiddenCardsCount > 0 &&

@@ -56,6 +56,17 @@
         }
     }
 
+    .octo-propertylabel {
+        max-width: 100%;
+        font-size: 12px;
+        color: (rgba(var(--center-channel-color-rgb), 0.64));
+
+        &::after {
+            content: ': ';
+            white-space: pre;
+        }
+    }
+
     .octo-icontitle {
         flex: 1 1 auto;
         font-weight: 600;

@@ -773,6 +773,10 @@ class Utils {
         if (currentPath === '/team/:teamId/new/:channelId') {
             return '/team/:teamId/:boardId?/:viewId?/:cardId?'
         }
+        // fast decision to open board page from non-board pages like admin
+        if (!currentPath.includes('/boardId') && !currentPath.includes('/teamId')) {
+            return '/:boardId?/:viewId?/:cardId?';
+        }
         return currentPath
     }
 

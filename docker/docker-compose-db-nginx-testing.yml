@@ -1,0 +1,53 @@
+version: "3"
+
+services:
+  app:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    depends_on:
+      - focalboard-db
+    expose:
+      - 8001
+    environment:
+      - VIRTUAL_HOST=${FOCALBOARD_HOST}
+      - LETSENCRYPT_HOST=${FOCALBOARD_HOST}
+      - FOCALBOARD_ENVIRONMENT=${FOCALBOARD_ENVIRONMENT:-dev}
+      - VIRTUAL_PORT=8001
+      - VIRTUAL_PROTO=http
+    volumes:
+      - "./config.json:/opt/focalboard/config.json"
+      - fbdata:/opt/focalboard/data
+    restart: always
+    networks:
+      - default
+
+  proxy:
+    image: nginx:latest
+    restart: always
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./nginx-testing.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./client_max_body_size.conf:/etc/nginx/conf.d/client_max_body_size.conf:ro
+    networks:
+      - default
+    depends_on:
+      - app
+
+  focalboard-db:
+    image: postgres:latest
+    restart: always
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - type: bind
+        source: /backups
+        target: /backups
+    environment:
+      POSTGRES_DB: boards
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+volumes:
+  fbdata:
+  pgdata:

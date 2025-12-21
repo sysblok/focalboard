@@ -1,3 +1,8 @@
 .FilterComponent {
-    min-width: 430px;
+    min-width: 440px;
+}
+
+.Filters {
+    display: flex;
+    flex-direction: column;
 }

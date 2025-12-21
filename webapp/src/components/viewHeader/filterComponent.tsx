@@ -74,15 +74,17 @@ const FilterComponent = (props: Props): JSX.Element => {
             <div
                 className='FilterComponent'
             >
-                {filters.map((filter) => (
-                    <FilterEntry
-                        key={`${filter.propertyId}-${filter.condition}`}
-                        board={board}
-                        view={activeView}
-                        conditionClicked={conditionClicked}
-                        filter={filter}
-                    />
-                ))}
+                <div className='Filters' >
+                    {filters.map((filter) => (
+                        <FilterEntry
+                            key={`${filter.propertyId}-${filter.condition}`}
+                            board={board}
+                            view={activeView}
+                            conditionClicked={conditionClicked}
+                            filter={filter}
+                        />
+                    ))}
+                </div>
 
                 <br/>
 

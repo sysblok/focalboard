@@ -4,6 +4,9 @@
 import React, {FC} from 'react'
 import {useIntl} from 'react-intl'
 
+import {useAppDispatch} from '../../store/hooks'
+import {updateViewSort} from '../../store/views'
+
 import {Constants} from '../../constants'
 import {Board, IPropertyTemplate} from '../../blocks/board'
 import {BoardView} from '../../blocks/boardView'
@@ -22,17 +25,18 @@ type Props = {
 const TableHeaderMenu: FC<Props> = (props: Props): JSX.Element => {
     const {board, activeView, templateId, views, cards} = props
     const intl = useIntl()
+    const dispatch = useAppDispatch()
     return (
         <Menu>
             <Menu.Text
                 id='sortAscending'
                 name={intl.formatMessage({id: 'TableHeaderMenu.sort-ascending', defaultMessage: 'Sort ascending'})}
-                onClick={() => mutator.changeViewSortOptions(board.id, activeView.id, activeView.fields.sortOptions, [{propertyId: templateId, reversed: false}])}
+                onClick={() => dispatch(updateViewSort([{propertyId: templateId, reversed: false}]))}
             />
             <Menu.Text
                 id='sortDescending'
                 name={intl.formatMessage({id: 'TableHeaderMenu.sort-descending', defaultMessage: 'Sort descending'})}
-                onClick={() => mutator.changeViewSortOptions(board.id, activeView.id, activeView.fields.sortOptions, [{propertyId: templateId, reversed: true}])}
+                onClick={() => dispatch(updateViewSort([{propertyId: templateId, reversed: true}]))}
             />
             <Menu.Text
                 id='insertLeft'
