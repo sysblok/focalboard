@@ -2,12 +2,17 @@ version: "3"
 
 services:
   app:
-    build:
-      context: ../
-      dockerfile: docker/Dockerfile
-      args:
-        FOCALBOARD_ENVIRONMENT: ${FOCALBOARD_ENVIRONMENT:-prod}
-        FOCALBOARD_ADMINS: ${FOCALBOARD_ADMINS:-}
+    # Use pre-built image from GitHub Container Registry
+    # Set FOCALBOARD_TAG environment variable to use 'dev' (default) or 'main' tag
+    # To authenticate: echo $GITHUB_TOKEN | docker login ghcr.io -u YOUR_USERNAME --password-stdin
+    image: ghcr.io/sysblok/focalboard/focalboard:${FOCALBOARD_TAG:-latest}
+    # Uncomment below and comment 'image:' above to build locally instead
+    # build:
+    #   context: ../
+    #   dockerfile: docker/Dockerfile
+    #   args:
+    #     FOCALBOARD_ENVIRONMENT: ${FOCALBOARD_ENVIRONMENT:-prod}
+    #     FOCALBOARD_ADMINS: ${FOCALBOARD_ADMINS:-}
     container_name: focalboard
     depends_on:
       - focalboard-db
