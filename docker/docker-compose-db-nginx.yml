@@ -2,24 +2,39 @@ version: "3"
 
 services:
   app:
-    build:
-      context: ../
-      dockerfile: docker/Dockerfile
-      args:
-        FOCALBOARD_ENVIRONMENT: ${FOCALBOARD_ENVIRONMENT:-prod}
-        FOCALBOARD_ADMINS: ${FOCALBOARD_ADMINS:-}
-    container_name: focalboard
+    # Use pre-built image from GitHub Container Registry
+    # Set FOCALBOARD_TAG environment variable to use 'dev' (default) or 'main' tag
+    # To authenticate: echo $GITHUB_TOKEN | docker login ghcr.io -u YOUR_USERNAME --password-stdin
+    image: ghcr.io/sysblok/focalboard/focalboard:${FOCALBOARD_TAG:-latest}
+    # Uncomment below and comment 'image:' above to build locally instead
+    # build:
+    #   context: ../
+    #   dockerfile: docker/Dockerfile
+    #   args:
+    #     FOCALBOARD_ENVIRONMENT: ${FOCALBOARD_ENVIRONMENT:-prod}
+    #     FOCALBOARD_ADMINS: ${FOCALBOARD_ADMINS:-}
+    container_name: focalboard-prod-app
     depends_on:
       - focalboard-db
     expose:
       - 8000
     environment:
-      - VIRTUAL_HOST=${FOCALBOARD_HOST}
-      - LETSENCRYPT_HOST=${FOCALBOARD_HOST}
       - FOCALBOARD_ENVIRONMENT=${FOCALBOARD_ENVIRONMENT:-dev}
       - FOCALBOARD_ADMINS=${FOCALBOARD_ADMINS:-}
-      - VIRTUAL_PORT=8000
-      - VIRTUAL_PROTO=http
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.focalboard-prod.rule=Host(`${FOCALBOARD_HOST}`)"
+      - "traefik.http.routers.focalboard-prod.entrypoints=web"
+      - "traefik.http.routers.focalboard-prod.middlewares=focalboard-prod-redirect"
+      - "traefik.http.routers.focalboard-prod-secure.rule=Host(`${FOCALBOARD_HOST}`)"
+      - "traefik.http.routers.focalboard-prod-secure.entrypoints=websecure"
+      - "traefik.http.routers.focalboard-prod-secure.tls.certresolver=le"
+      - "traefik.http.routers.focalboard-prod-secure.service=focalboard-prod"
+      - "traefik.http.middlewares.focalboard-prod-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.focalboard-prod-redirect.redirectscheme.permanent=true"
+      - "traefik.http.services.focalboard-prod.loadbalancer.server.port=8000"
+      - "traefik.http.services.focalboard-prod.loadbalancer.healthcheck.path=/api/v2/system/ping"
+      - "traefik.http.services.focalboard-prod.loadbalancer.healthcheck.interval=10s"
     volumes:
       - "./config.json:/opt/focalboard/config.json"
       - fbdata:/opt/focalboard/data
@@ -28,46 +43,9 @@ services:
       - proxy
       - default
 
-  proxy:
-    image: jwilder/nginx-proxy:latest
-    container_name: focalboard-proxy
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-      - ./client_max_body_size.conf:/etc/nginx/conf.d/client_max_body_size.conf:ro
-      - "html:/usr/share/nginx/html"
-      - "dhparam:/etc/nginx/dhparam"
-      - "vhost:/etc/nginx/vhost.d"
-      - "certs:/etc/nginx/certs"
-      - "letsencrypt-acme:/etc/acme.sh"
-    networks:
-      - proxy
-
-  letsencrypt:
-    image: "nginxproxy/acme-companion:latest"
-    container_name: "letsencrypt-helper"
-    volumes:
-      - "html:/usr/share/nginx/html"
-      - "dhparam:/etc/nginx/dhparam"
-      - "vhost:/etc/nginx/vhost.d"
-      - "certs:/etc/nginx/certs"
-      - "/run/docker.sock:/var/run/docker.sock:ro"
-      - "letsencrypt-acme:/etc/acme.sh"
-    environment:
-      NGINX_PROXY_CONTAINER: "focalboard-proxy"
-      DEFAULT_EMAIL: ${LETSENCRYPT_EMAIL}
-    restart: "always"
-    depends_on:
-      - "proxy"
-    networks:
-      - proxy
-
   focalboard-db:
-    image: postgres:latest
-    container_name: focalboard-postgres
+    image: postgres:16
+    container_name: focalboard-prod-db
     restart: always
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -82,12 +60,8 @@ services:
 volumes:
   fbdata:
   pgdata:
-  certs:
-  html:
-  vhost:
-  dhparam:
-  letsencrypt-acme:
 
 networks:
   proxy:
+    external: true
 
