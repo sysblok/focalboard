@@ -5,7 +5,7 @@ services:
     # Use pre-built image from GitHub Container Registry
     # Set FOCALBOARD_TAG environment variable to use 'dev' (default) or 'main' tag
     # To authenticate: echo $GITHUB_TOKEN | docker login ghcr.io -u YOUR_USERNAME --password-stdin
-    image: ghcr.io/sysblok/focalboard/focalboard:${FOCALBOARD_TAG:-latest}
+    image: ghcr.io/sysblok/focalboard/focalboard:${FOCALBOARD_TAG:-main}
     # Uncomment below and comment 'image:' above to build locally instead
     # build:
     #   context: ../
@@ -33,8 +33,6 @@ services:
       - "traefik.http.middlewares.focalboard-prod-redirect.redirectscheme.scheme=https"
       - "traefik.http.middlewares.focalboard-prod-redirect.redirectscheme.permanent=true"
       - "traefik.http.services.focalboard-prod.loadbalancer.server.port=8000"
-      - "traefik.http.services.focalboard-prod.loadbalancer.healthcheck.path=/api/v2/system/ping"
-      - "traefik.http.services.focalboard-prod.loadbalancer.healthcheck.interval=10s"
     volumes:
       - "./config.json:/opt/focalboard/config.json"
       - fbdata:/opt/focalboard/data
@@ -50,7 +48,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - type: bind
-        source: /backups
+        source: /backups/focalboard-prod
         target: /backups
     environment:
       POSTGRES_DB: boards
