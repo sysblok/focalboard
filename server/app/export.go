@@ -111,6 +111,33 @@ func (a *App) writeArchiveBoard(zw *zip.Writer, board model.Board, opt model.Exp
 		}
 	}
 
+	// Export Users with Username Information
+	// Collect all unique user IDs from the board
+	userIDs := a.getUserIDsForBoard(board, blocks, boardMembers)
+
+	a.logger.Debug("Exporting users for board",
+		mlog.String("board_id", board.ID),
+		mlog.Int("user_count", len(userIDs)),
+	)
+	// Fetch and export user data in batch for efficiency
+	if len(userIDs) > 0 {
+		users, err := a.GetUsersList(userIDs)
+		if err != nil {
+			// Log warning but don't fail the export
+			a.logger.Warn("Could not fetch all users for export",
+				mlog.String("board_id", board.ID),
+				mlog.Err(err),
+			)
+		} else {
+			// Write user lines
+			for _, user := range users {
+				if err = a.writeArchiveUserLine(w, user); err != nil {
+					return fmt.Errorf("cannot write user %s to archive: %w", user.ID, err)
+				}
+			}
+		}
+	}
+
 	// write the files
 	for _, filename := range files {
 		if err := a.writeArchiveFile(zw, filename, board.ID, opt); err != nil {
@@ -137,6 +164,42 @@ func (a *App) writeArchiveBoardMemberLine(w io.Writer, boardMember *model.BoardM
 	}
 
 	_, err = w.Write(bm)
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write(newline)
+	return err
+}
+
+// writeArchiveUserLine writes a single user to the archive.
+func (a *App) writeArchiveUserLine(w io.Writer, user *model.User) error {
+	// Create a simplified user export (without sensitive data)
+	userExport := map[string]interface{}{
+		"userId":    user.ID,
+		"username":  user.Username,
+		"email":     user.Email,
+		"firstname": user.FirstName,
+		"lastname":  user.LastName,
+		"nickname":  user.Nickname,
+	}
+
+	u, err := json.Marshal(&userExport)
+	if err != nil {
+		return err
+	}
+
+	line := model.ArchiveLine{
+		Type: "user",
+		Data: u,
+	}
+
+	u, err = json.Marshal(&line)
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write(u)
 	if err != nil {
 		return err
 	}
@@ -252,4 +315,100 @@ func extractFilename(block *model.Block) (string, error) {
 		return "", model.ErrInvalidImageBlock
 	}
 	return filename, nil
+}
+
+// getUserIDsForBoard collects all unique user IDs referenced in the board.
+func (a *App) getUserIDsForBoard(board model.Board, blocks []*model.Block, boardMembers []*model.BoardMember) []string {
+	userIDMap := make(map[string]bool)
+
+	// Collect from board creator
+	if board.CreatedBy != "" {
+		userIDMap[board.CreatedBy] = true
+	}
+	if board.ModifiedBy != "" {
+		userIDMap[board.ModifiedBy] = true
+	}
+
+	// Collect from board members
+	for _, member := range boardMembers {
+		if member.UserID != "" {
+			userIDMap[member.UserID] = true
+		}
+	}
+
+	// Get board properties to identify person/multiPerson types
+	personPropertyIDs := make(map[string]bool)
+	if board.CardProperties != nil {
+		for _, propMap := range board.CardProperties {
+			propType, typeOk := propMap["type"].(string) // Extract "type" field
+			propID, idOk := propMap["userId"].(string)   // Extract "id" field
+			propName, _ := propMap["name"].(string)      // Extract "name" field
+
+			if typeOk && idOk && (propType == "person" || propType == "multiPerson") {
+				personPropertyIDs[propID] = true
+				a.logger.Debug("Found person property",
+					mlog.String("property_id", propID),
+					mlog.String("property_name", propName),
+					mlog.String("property_type", propType),
+				)
+			}
+		}
+	}
+
+	// Collect from blocks (cards, comments, etc.)
+	for _, block := range blocks {
+		// Created by
+		if block.CreatedBy != "" {
+			userIDMap[block.CreatedBy] = true
+		}
+		// Modified by
+		if block.ModifiedBy != "" {
+			userIDMap[block.ModifiedBy] = true
+		}
+
+		// Check card properties for person/multiPerson fields
+		if block.Fields != nil {
+			// Fields["properties"] contains card property values
+			if props, ok := block.Fields["properties"].(map[string]interface{}); ok {
+				for propID, value := range props {
+					// Skip if not a person property
+					if !personPropertyIDs[propID] {
+						continue
+					}
+					// Handle single person (string - user ID)
+					if userID, ok := value.(string); ok && len(userID) > 0 {
+						userIDMap[userID] = true
+						a.logger.Debug("Found user in person property",
+							mlog.String("user_id", userID),
+							mlog.String("property_id", propID),
+						)
+					}
+					// Handle multiPerson (array of user IDs)
+					if userIDs, ok := value.([]interface{}); ok {
+						for _, uid := range userIDs {
+							if userID, ok := uid.(string); ok && len(userID) >= 20 {
+								userIDMap[userID] = true
+								a.logger.Debug("Found user in multiPerson property",
+									mlog.String("user_id", userID),
+									mlog.String("property_id", propID),
+								)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Convert map to slice
+	userIDs := make([]string, 0, len(userIDMap))
+	for userID := range userIDMap {
+		userIDs = append(userIDs, userID)
+	}
+
+	a.logger.Info("Collected user IDs for export",
+		mlog.Int("total_users", len(userIDs)),
+	)
+
+	return userIDs
 }
