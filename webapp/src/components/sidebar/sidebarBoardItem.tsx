@@ -35,7 +35,7 @@ import {Utils} from '../../utils'
 
 import AddIcon from '../../widgets/icons/add'
 import CloseIcon from '../../widgets/icons/close'
-import {getMe} from '../../store/users'
+import {getMe, isAdmin} from '../../store/users'
 import octoClient from '../../octoClient'
 import {getCurrentBoardId} from '../../store/boards'
 import {UserSettings} from '../../userSettings'
@@ -79,6 +79,7 @@ const SidebarBoardItem = (props: Props) => {
     const history = useHistory()
     const dispatch = useAppDispatch()
     const currentBoardID = useAppSelector(getCurrentBoardId)
+    const isUserAdmin = useAppSelector<boolean>(isAdmin);
 
     const generateMoveToCategoryOptions = (boardID: string) => {
         return props.allCategories.map((category) => (
@@ -261,12 +262,13 @@ const SidebarBoardItem = (props: Props) => {
                                             icon={<AddIcon/>}
                                             onClick={() => handleDuplicateBoard(true)}
                                         />}
+                                    {isUserAdmin &&
                                     <Menu.Text
                                         id='exportBoardArchive'
                                         name={intl.formatMessage({id: 'ViewHeader.export-board-archive', defaultMessage: 'Export board archive'})}
                                         icon={<CompassIcon icon='export-variant'/>}
                                         onClick={() => Archiver.exportBoardArchive(board)}
-                                    />
+                                    />}
                                     <Menu.Text
                                         id='hideBoard'
                                         name={intl.formatMessage({id: 'HideBoard.MenuOption', defaultMessage: 'Hide board'})}
