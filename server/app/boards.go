@@ -237,6 +237,10 @@ func (a *App) GetBoardsForUserAndTeam(userID, teamID string, includePublicBoards
 	return a.store.GetBoardsForUserAndTeam(userID, teamID, includePublicBoards)
 }
 
+func (a *App) GetAllBoardsForTeam(teamID string) ([]*model.Board, error) {
+	return a.store.GetAllBoardsForTeam(teamID)
+}
+
 func (a *App) GetTemplateBoards(teamID, userID string) ([]*model.Board, error) {
 	return a.store.GetTemplateBoards(teamID, userID)
 }
