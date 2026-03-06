@@ -63,14 +63,25 @@ func (a *API) handleGetBoards(w http.ResponseWriter, r *http.Request) {
 	defer a.audit.LogRecord(audit.LevelRead, auditRec)
 	auditRec.AddMeta("teamID", teamID)
 
-	isGuest, err := a.userIsGuest(userID)
+	isAdmin, err := a.isHardcodedAdmin(userID)
 	if err != nil {
 		a.errorResponse(w, r, err)
 		return
 	}
 
-	// retrieve boards list
-	boards, err := a.app.GetBoardsForUserAndTeam(userID, teamID, !isGuest)
+	var boards []*model.Board
+	if isAdmin {
+		// Admin sees all boards for the team
+		boards, err = a.app.GetAllBoardsForTeam(teamID)
+	} else {
+		isGuest, err := a.userIsGuest(userID)
+		if err != nil {
+			a.errorResponse(w, r, err)
+			return
+		}
+		boards, err = a.app.GetBoardsForUserAndTeam(userID, teamID, !isGuest)
+	}
+
 	if err != nil {
 		a.errorResponse(w, r, err)
 		return

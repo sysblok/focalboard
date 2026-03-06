@@ -19,6 +19,7 @@ import MenuWrapper from '../../widgets/menuWrapper'
 import {useAppDispatch, useAppSelector} from '../../store/hooks'
 import {storeLanguage} from '../../store/language'
 import {getCurrentTeam, Team} from '../../store/teams'
+import {isAdmin} from '../../store/users'
 import {UserSettings} from '../../userSettings'
 
 import './sidebarSettingsMenu.scss'
@@ -26,6 +27,7 @@ import CheckIcon from '../../widgets/icons/check'
 import {Constants} from '../../constants'
 
 import TelemetryClient, {TelemetryCategory, TelemetryActions} from '../../telemetry/telemetryClient'
+
 
 type Props = {
     activeTheme: string
@@ -35,6 +37,7 @@ const SidebarSettingsMenu = (props: Props) => {
     const intl = useIntl()
     const dispatch = useAppDispatch()
     const currentTeam = useAppSelector<Team|null>(getCurrentTeam)
+    const isUserAdmin = useAppSelector<boolean>(isAdmin);
 
     // we need this as the sidebar doesn't always need to re-render
     // on theme change. This can cause props and the actual
@@ -122,6 +125,7 @@ const SidebarSettingsMenu = (props: Props) => {
                             ))
                         }
                     </Menu.SubMenu>
+                    {isUserAdmin &&
                     <Menu.Text
                         id='export'
                         name={intl.formatMessage({id: 'Sidebar.export-archive', defaultMessage: 'Export archive'})}
@@ -131,7 +135,7 @@ const SidebarSettingsMenu = (props: Props) => {
                                 Archiver.exportFullArchive(currentTeam.id)
                             }
                         }}
-                    />
+                        />}
                     <Menu.SubMenu
                         id='lang'
                         name={intl.formatMessage({id: 'Sidebar.set-language', defaultMessage: 'Set language'})}
