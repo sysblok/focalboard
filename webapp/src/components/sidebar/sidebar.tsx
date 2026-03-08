@@ -1,7 +1,7 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
-import {FormattedMessage, useIntl} from 'react-intl'
+import React, {useCallback, useEffect, useMemo, useState} from 'react'
+import {FormattedMessage} from 'react-intl'
 import {DragDropContext, Droppable, DropResult} from 'react-beautiful-dnd'
 
 import {getActiveThemeName, loadTheme} from '../../theme'
@@ -9,7 +9,7 @@ import IconButton from '../../widgets/buttons/iconButton'
 import HamburgerIcon from '../../widgets/icons/hamburger'
 import HideSidebarIcon from '../../widgets/icons/hideSidebar'
 import ShowSidebarIcon from '../../widgets/icons/showSidebar'
-import {getAllSortedBoards, getCurrentBoard, getMySortedBoards} from '../../store/boards'
+import {getCurrentBoard, getMySortedBoards} from '../../store/boards'
 import {useAppDispatch, useAppSelector} from '../../store/hooks'
 import {Utils} from '../../utils'
 import {IUser} from '../../user'
@@ -72,22 +72,10 @@ const Sidebar = (props: Props) => {
     const [isHidden, setHidden] = useState(false)
     const [userHidden, setUserHidden] = useState(false)
     const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions())
+    const [adminOnlyBoards, setAdminOnlyBoards] = useState<Board[]>([])
+
     const isUserAdmin = useAppSelector<boolean>(isAdmin);
-    const myBoards = useAppSelector(getMySortedBoards)
-    const allBoards = useAppSelector(getAllSortedBoards)
-    // For regular category display, always use myBoards (even for admin)
-    const boards = myBoards
-
-    // Admin-only boards = allBoards minus myBoards
-    const adminOnlyBoards = useMemo((): Board[] => {
-        if (!isUserAdmin) {
-            return []
-        }
-
-        const myBoardIDs = new Set(myBoards.map(b => b.id))
-        return allBoards.filter((board) => !myBoardIDs.has(board.id))
-    }, [isUserAdmin, myBoards, allBoards])
-
+    const boards = useAppSelector(getMySortedBoards)
     const dispatch = useAppDispatch()
     const sidebarCategories = useAppSelector<CategoryBoards[]>(getSidebarCategories)
     const me = useAppSelector<IUser|null>(getMe)
@@ -95,6 +83,32 @@ const Sidebar = (props: Props) => {
     const currentBoard = useAppSelector(getCurrentBoard)
     const teamId = useAppSelector(getCurrentTeamId)
     const team = useAppSelector(getCurrentTeam)
+
+        // Fetch admin-only boards separately
+        useEffect(() => {
+            const fetchAdminBoards = async () => {
+                if (!isUserAdmin || !team) {
+                    setAdminOnlyBoards([])
+                    return
+                }
+
+                try {
+                    // Fetch all boards for team (admin endpoint)
+                    const allBoards = await octoClient.getAllBoardsAdmin(team.id)
+
+                    // Filter out boards the admin is already a member of
+                    const myBoardIDs = new Set(boards.map(b => b.id))
+                    const otherBoards = allBoards.filter((board: Board) => !myBoardIDs.has(board.id))
+
+                    setAdminOnlyBoards(otherBoards)
+                } catch (err) {
+                    console.error('Failed to fetch admin boards:', err)
+                    setAdminOnlyBoards([])
+                }
+            }
+
+            fetchAdminBoards()
+        }, [isUserAdmin, team?.id, boards])
 
     useEffect(() => {
         const categoryOnChangeHandler = (_: WSClient, categories: Category[]) => {
