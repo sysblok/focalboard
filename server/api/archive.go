@@ -56,8 +56,15 @@ func (a *API) handleArchiveExportBoard(w http.ResponseWriter, r *http.Request) {
 	boardID := vars["boardID"]
 	userID := getUserID(r)
 
+	// Check if user is admin
+	isAdmin, err := a.isHardcodedAdmin(userID)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
 	// check user has permission to board
-	if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard) {
+	if !isAdmin && !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard) {
 		// if this user has `manage_system` permission and there is a license with the compliance
 		// feature enabled, then we will allow the export.
 		license := a.app.GetLicense()
