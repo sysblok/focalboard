@@ -380,6 +380,18 @@ class OctoClient {
         return boards
     }
 
+    async getAllBoardsForTeamAdmin(teamId: string): Promise<Board[]> {
+        const path = `/api/v2/teams/${teamId}/boards/admin`
+        const response = await fetch(this.getBaseURL() + path, {
+            method: 'GET',
+            headers: this.headers(),
+        })
+        if (response.status !== 200) {
+            return []
+        }
+        return (await response.json()) as Board[]
+    }
+
     private async getBoardMembersWithPath(path: string): Promise<BoardMember[]> {
         const response = await fetch(this.getBaseURL() + path, {headers: this.headers()})
         if (response.status !== 200) {
@@ -787,6 +799,18 @@ class OctoClient {
     async getBoards(): Promise<Board[]> {
         const path = this.teamPath() + '/boards'
         return this.getBoardsWithPath(path)
+    }
+
+    async getAllBoardsAdmin(teamId: string): Promise<Board[]> {
+        const path = `/api/v2/teams/${teamId}/boards/admin`
+        const response = await fetch(this.getBaseURL() + path, {
+            method: 'GET',
+            headers: this.headers(),
+        })
+        if (response.status !== 200) {
+            return []
+        }
+        return (await response.json()) as Board[]
     }
 
     async getBoard(boardID: string): Promise<Board | undefined> {
