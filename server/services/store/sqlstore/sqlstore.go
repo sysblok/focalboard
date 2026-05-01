@@ -129,7 +129,7 @@ func (s *SQLStore) DBType() string {
 
 func (s *SQLStore) getQueryBuilder(db sq.BaseRunner) sq.StatementBuilderType {
 	builder := sq.StatementBuilder
-	if s.dbType == model.PostgresDBType || s.dbType == model.SqliteDBType {
+	if s.dbType == model.PostgresDBType || s.dbType == model.SqliteDBType || s.dbType == model.TursoDBType {
 		builder = builder.PlaceholderFormat(sq.Dollar)
 	}
 
@@ -140,14 +140,14 @@ func (s *SQLStore) escapeField(fieldName string) string { //nolint:unparam
 	if s.dbType == model.MysqlDBType {
 		return "`" + fieldName + "`"
 	}
-	if s.dbType == model.PostgresDBType || s.dbType == model.SqliteDBType {
+	if s.dbType == model.PostgresDBType || s.dbType == model.SqliteDBType || s.dbType == model.TursoDBType {
 		return "\"" + fieldName + "\""
 	}
 	return fieldName
 }
 
 func (s *SQLStore) concatenationSelector(field string, delimiter string) string {
-	if s.dbType == model.SqliteDBType {
+	if s.dbType == model.SqliteDBType || s.dbType == model.TursoDBType {
 		return fmt.Sprintf("group_concat(%s)", field)
 	}
 	if s.dbType == model.PostgresDBType {
@@ -160,7 +160,7 @@ func (s *SQLStore) concatenationSelector(field string, delimiter string) string 
 }
 
 func (s *SQLStore) elementInColumn(column string) string {
-	if s.dbType == model.SqliteDBType || s.dbType == model.MysqlDBType {
+	if s.dbType == model.SqliteDBType || s.dbType == model.MysqlDBType || s.dbType == model.TursoDBType {
 		return fmt.Sprintf("instr(%s, ?) > 0", column)
 	}
 	if s.dbType == model.PostgresDBType {
@@ -194,7 +194,7 @@ func (s *SQLStore) DBVersion() string {
 		row = s.db.QueryRow("SELECT VERSION()")
 	case model.PostgresDBType:
 		row = s.db.QueryRow("SHOW server_version")
-	case model.SqliteDBType:
+	case model.SqliteDBType, model.TursoDBType:
 		row = s.db.QueryRow("SELECT sqlite_version()")
 	default:
 		return ""
