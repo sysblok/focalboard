@@ -718,13 +718,14 @@ func (s *SQLStore) getBlockHistoryNewestChildren(db sq.BaseRunner, parentID stri
 	// if we're using postgres or sqlite, we need to replace the
 	// question mark placeholder with the numbered dollar one, now
 	// that the full query is built
-	if s.dbType == model.PostgresDBType || s.dbType == model.SqliteDBType {
+	if s.dbType == model.PostgresDBType || s.dbType == model.SqliteDBType || s.dbType == model.TursoDBType {
 		var rErr error
 		sql, rErr = sq.Dollar.ReplacePlaceholders(sql)
 		if rErr != nil {
 			return nil, false, fmt.Errorf("getBlockHistoryNewestChildren unable to replace sql placeholders: %w", rErr)
 		}
 	}
+	// D1 keeps native ? placeholders — no replacement needed.
 
 	rows, err := db.Query(sql, args...)
 	if err != nil {

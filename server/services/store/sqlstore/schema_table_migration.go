@@ -112,7 +112,7 @@ func (s *SQLStore) isSchemaMigrationNeeded() (bool, error) {
 	// This column exists only for the new schema version table.
 
 	// SQLite needs a bit of a special handling
-	if s.dbType == model.SqliteDBType {
+	if s.dbType == model.SqliteDBType || s.dbType == model.TursoDBType || s.dbType == model.D1DBType {
 		return s.isSchemaMigrationNeededSQLite()
 	}
 

@@ -103,7 +103,7 @@ func (s *SQLStore) Migrate() error {
 	var driver drivers.Driver
 	var err error
 
-	if s.dbType == model.SqliteDBType || s.dbType == model.TursoDBType {
+	if s.dbType == model.SqliteDBType || s.dbType == model.TursoDBType || s.dbType == model.D1DBType {
 		driver, err = sqlite.WithInstance(s.db)
 		if err != nil {
 			return err
@@ -150,7 +150,7 @@ func (s *SQLStore) Migrate() error {
 	params := map[string]interface{}{
 		"prefix":     s.tablePrefix,
 		"postgres":   s.dbType == model.PostgresDBType,
-		"sqlite":     s.dbType == model.SqliteDBType || s.dbType == model.TursoDBType,
+		"sqlite":     s.dbType == model.SqliteDBType || s.dbType == model.TursoDBType || s.dbType == model.D1DBType,
 		"mysql":      s.dbType == model.MysqlDBType,
 		"plugin":     s.isPlugin,
 		"singleUser": s.isSingleUser,
@@ -196,7 +196,7 @@ func (s *SQLStore) Migrate() error {
 		morph.SetStatementTimeoutInSeconds(1000000),
 	}
 
-	if s.dbType == model.SqliteDBType || s.dbType == model.TursoDBType {
+	if s.dbType == model.SqliteDBType || s.dbType == model.TursoDBType || s.dbType == model.D1DBType {
 		opts = opts[:0] // sqlite/libsql driver does not support locking.
 	}
 
@@ -322,7 +322,7 @@ func (s *SQLStore) genAddColumnIfNeeded(tableName, columnName, datatype, constra
 	normTableName := s.normalizeTablename(tableName)
 
 	switch s.dbType {
-	case model.SqliteDBType, model.TursoDBType:
+	case model.SqliteDBType, model.TursoDBType, model.D1DBType:
 		// Sqlite does not support any conditionals that can contain DDL commands. No idempotent migrations for Sqlite :-(
 		return fmt.Sprintf("\nALTER TABLE %s ADD COLUMN %s %s %s;\n", normTableName, columnName, datatype, constraint), nil
 	case model.MysqlDBType:
@@ -361,7 +361,7 @@ func (s *SQLStore) genDropColumnIfNeeded(tableName, columnName string) (string, 
 	normTableName := s.normalizeTablename(tableName)
 
 	switch s.dbType {
-	case model.SqliteDBType, model.TursoDBType:
+	case model.SqliteDBType, model.TursoDBType, model.D1DBType:
 		return fmt.Sprintf("\n-- Sqlite3 cannot drop columns for versions less than 3.35.0; drop column '%s' in table '%s' skipped\n", columnName, tableName), nil
 	case model.MysqlDBType:
 		vars := map[string]string{
@@ -398,7 +398,7 @@ func (s *SQLStore) genCreateIndexIfNeeded(tableName, columns string) (string, er
 	normTableName := s.normalizeTablename(tableName)
 
 	switch s.dbType {
-	case model.SqliteDBType, model.TursoDBType:
+	case model.SqliteDBType, model.TursoDBType, model.D1DBType:
 		// No support for idempotent index creation in Sqlite.
 		return fmt.Sprintf("\nCREATE INDEX %s ON %s (%s);\n", indexName, normTableName, columns), nil
 	case model.MysqlDBType:
@@ -445,7 +445,7 @@ func (s *SQLStore) genRenameTableIfNeeded(oldTableName, newTableName string) (st
 	}
 
 	switch s.dbType {
-	case model.SqliteDBType, model.TursoDBType:
+	case model.SqliteDBType, model.TursoDBType, model.D1DBType:
 		// No support for idempotent table renaming in Sqlite.
 		return fmt.Sprintf("\nALTER TABLE %s RENAME TO %s;\n", normOldTableName, newTableName), nil
 	case model.MysqlDBType:
@@ -494,7 +494,7 @@ func (s *SQLStore) genRenameColumnIfNeeded(tableName, oldColumnName, newColumnNa
 	}
 
 	switch s.dbType {
-	case model.SqliteDBType, model.TursoDBType:
+	case model.SqliteDBType, model.TursoDBType, model.D1DBType:
 		// No support for idempotent column renaming in Sqlite.
 		return fmt.Sprintf("\nALTER TABLE %s RENAME COLUMN %s TO %s;\n", normTableName, oldColumnName, newColumnName), nil
 	case model.MysqlDBType:
@@ -544,7 +544,7 @@ func (s *SQLStore) doesTableExist(tableName string) (bool, error) {
 				"table_name":   tableName,
 				"table_schema": s.schemaName,
 			})
-	case model.SqliteDBType, model.TursoDBType:
+	case model.SqliteDBType, model.TursoDBType, model.D1DBType:
 		query = s.getQueryBuilder(s.db).
 			Select("name").
 			From("sqlite_master").
@@ -588,7 +588,7 @@ func (s *SQLStore) doesColumnExist(tableName, columnName string) (bool, error) {
 				"table_schema": s.schemaName,
 				"column_name":  columnName,
 			})
-	case model.SqliteDBType, model.TursoDBType:
+	case model.SqliteDBType, model.TursoDBType, model.D1DBType:
 		query = s.getQueryBuilder(s.db).
 			Select("name").
 			From(fmt.Sprintf("pragma_table_info('%s')", tableName)).
@@ -634,7 +634,7 @@ func (s *SQLStore) genAddConstraintIfNeeded(tableName, constraintName, constrain
 	}
 
 	switch s.dbType {
-	case model.SqliteDBType, model.TursoDBType:
+	case model.SqliteDBType, model.TursoDBType, model.D1DBType:
 		// SQLite doesn't have a generic way to add constraint. For example, you can only create indexes on existing tables.
 		// For other constraints, you need to re-build the table. So skipping here.
 		// Include SQLite specific migration in original migration file.

@@ -140,7 +140,7 @@ All settings can be specified in `config.json` or via environment variables with
 |----------|-------------|---------|
 | `FOCALBOARD_SERVERROOT` | Public server root URL | `http://localhost:8000` |
 | `FOCALBOARD_PORT` | Server listening port | `8000` |
-| `FOCALBOARD_DBTYPE` | Database type: `sqlite3`, `postgres`, `mysql`, `libsql` | `sqlite3` |
+| `FOCALBOARD_DBTYPE` | Database type: `sqlite3`, `postgres`, `mysql`, `libsql`, `d1` | `sqlite3` |
 | `FOCALBOARD_DBCONFIG` | Database connection string | `./focalboard.db` |
 | `FOCALBOARD_DBPINGATTEMPTS` | DB connection retry attempts | `5` |
 | `FOCALBOARD_DBTABLEPREFIX` | Database table name prefix | `""` |
@@ -195,6 +195,25 @@ FOCALBOARD_FILESS3CONFIG_ACCESSKEYID=<R2_ACCESS_KEY_ID>
 FOCALBOARD_FILESS3CONFIG_SECRETACCESSKEY=<R2_SECRET_ACCESS_KEY>
 FOCALBOARD_FILESS3CONFIG_BUCKET=<BUCKET_NAME>
 ```
+
+### Cloudflare D1
+
+Build with the `d1` tag to enable D1 support:
+
+```bash
+go build -tags d1 ./...
+```
+
+Then configure:
+
+```bash
+FOCALBOARD_DBTYPE=d1
+FOCALBOARD_DBCONFIG=d1://<ACCOUNT_ID>/<DATABASE_ID>?token=<API_TOKEN>
+```
+
+Get your credentials from the [Cloudflare dashboard](https://dash.cloudflare.com) → **Workers & Pages → D1**.
+
+> **Note:** D1 transactions buffer all writes and flush atomically via the D1 batch API on commit. `SELECT` queries inside a transaction execute immediately and do not see uncommitted writes (no read-your-own-writes isolation).
 
 ### OIDC Authentication
 

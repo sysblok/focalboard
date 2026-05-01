@@ -5,4 +5,5 @@ const (
 	PostgresDBType = "postgres"
 	MysqlDBType    = "mysql"
 	TursoDBType    = "libsql"
+	D1DBType       = "d1"
 )
