@@ -12,17 +12,17 @@ const (
 )
 
 type AmazonS3Config struct {
-	AccessKeyID     string
-	SecretAccessKey string
-	Bucket          string
-	PathPrefix      string
-	Region          string
-	Endpoint        string
-	SSL             bool
-	SignV2          bool
-	SSE             bool
-	Trace           bool
-	Timeout         int64
+	AccessKeyID     string `json:"accesskeyid" mapstructure:"accesskeyid"`
+	SecretAccessKey string `json:"secretaccesskey" mapstructure:"secretaccesskey"`
+	Bucket          string `json:"bucket" mapstructure:"bucket"`
+	PathPrefix      string `json:"pathprefix" mapstructure:"pathprefix"`
+	Region          string `json:"region" mapstructure:"region"`
+	Endpoint        string `json:"endpoint" mapstructure:"endpoint"`
+	SSL             bool   `json:"ssl" mapstructure:"ssl"`
+	SignV2          bool   `json:"signv2" mapstructure:"signv2"`
+	SSE             bool   `json:"sse" mapstructure:"sse"`
+	Trace           bool   `json:"trace" mapstructure:"trace"`
+	Timeout         int64  `json:"timeout" mapstructure:"timeout"`
 }
 
 type OIDCConfig struct {
