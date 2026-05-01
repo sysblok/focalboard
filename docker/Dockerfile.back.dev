@@ -7,6 +7,8 @@ ADD . /go/src/focalboard
 # Get target architecture
 ARG TARGETOS
 ARG TARGETARCH
+ARG FOCALBOARD_ADMINS
+ENV FOCALBOARD_ADMINS=$FOCALBOARD_ADMINS
 
 RUN --mount=type=cache,target="/root/.cache/go-build" EXCLUDE_PLUGIN=true EXCLUDE_SERVER=true EXCLUDE_ENTERPRISE=true make server-docker os=${TARGETOS} arch=${TARGETARCH}
 

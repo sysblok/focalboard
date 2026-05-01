@@ -5,6 +5,7 @@ import {createSlice, createAsyncThunk, PayloadAction, createSelector} from '@red
 
 import {default as client} from '../octoClient'
 import {IUser, parseUserProps, UserPreference} from '../user'
+import {adminUsernames} from '../config/envConfig'
 
 import {Utils} from '../utils'
 
@@ -211,7 +212,5 @@ export const isAdmin = createSelector(
     getMe,
     (user): boolean => {
     if (!user) return false;
-    const adminUsernames = ['admin', 'bulgak0v', 'nastasia75'];
-
-    return adminUsernames.includes(user.username);
-})
+        return adminUsernames.includes(user.username)
+    })

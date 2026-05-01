@@ -173,6 +173,23 @@ class OctoClient {
         return {code: response.status, json}
     }
 
+    async changeUserPassword(userId: string, newPassword: string): Promise<boolean> {
+        const path = `/api/v2/users/${encodeURIComponent(userId)}/changeuserpassword`
+        const body = JSON.stringify({ newPassword })
+
+        const response = await fetch(this.getBaseURL() + path, {
+            method: 'POST',
+            headers: this.headers(),
+            body,
+        })
+
+        if (response.status !== 200) {
+            return false
+        }
+
+        return true
+    }
+
     private headers() {
         return {
             Accept: 'application/json',
@@ -361,6 +378,18 @@ class OctoClient {
         }
         const boards = (await this.getJson(response, [])) as Board[]
         return boards
+    }
+
+    async getAllBoardsForTeamAdmin(teamId: string): Promise<Board[]> {
+        const path = `/api/v2/teams/${teamId}/boards/admin`
+        const response = await fetch(this.getBaseURL() + path, {
+            method: 'GET',
+            headers: this.headers(),
+        })
+        if (response.status !== 200) {
+            return []
+        }
+        return (await response.json()) as Board[]
     }
 
     private async getBoardMembersWithPath(path: string): Promise<BoardMember[]> {
@@ -770,6 +799,18 @@ class OctoClient {
     async getBoards(): Promise<Board[]> {
         const path = this.teamPath() + '/boards'
         return this.getBoardsWithPath(path)
+    }
+
+    async getAllBoardsAdmin(teamId: string): Promise<Board[]> {
+        const path = `/api/v2/teams/${teamId}/boards/admin`
+        const response = await fetch(this.getBaseURL() + path, {
+            method: 'GET',
+            headers: this.headers(),
+        })
+        if (response.status !== 200) {
+            return []
+        }
+        return (await response.json()) as Board[]
     }
 
     async getBoard(boardID: string): Promise<Board | undefined> {

@@ -1,12 +1,15 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 const path = require('path');
+const webpack = require('webpack');
 
 const tsTransformer = require('@formatjs/ts-transformer');
 const CopyPlugin = require('copy-webpack-plugin');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const outpath = path.resolve(__dirname, 'pack');
+
+console.log('🔧 FOCALBOARD_ENVIRONMENT from Docker:', process.env.FOCALBOARD_ENVIRONMENT);
 
 function makeCommonConfig() {
     const commonConfig = {
@@ -98,6 +101,10 @@ function makeCommonConfig() {
                 filename: 'index.html',
                 publicPath: '{{.BaseURL}}/',
                 hash: true,
+            }),
+            new webpack.DefinePlugin({
+                'process.env.FOCALBOARD_ENVIRONMENT': JSON.stringify(process.env.FOCALBOARD_ENVIRONMENT || 'dev'),
+                'process.env.FOCALBOARD_ADMINS': JSON.stringify(process.env.FOCALBOARD_ADMINS || ''),
             }),
         ],
         entry: ['./src/main.tsx', './src/userSettings.ts'],

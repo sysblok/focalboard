@@ -413,6 +413,11 @@ func (s *SQLStore) GetBoardsForUserAndTeam(userID string, teamID string, include
 
 }
 
+func (s *SQLStore) GetAllBoardsForTeam(teamID string) ([]*model.Board, error) {
+	return s.getAllBoardsForTeam(s.db, teamID)
+
+}
+
 func (s *SQLStore) GetBoardsInTeamByIds(boardIDs []string, teamID string) ([]*model.Board, error) {
 	return s.getBoardsInTeamByIds(s.db, boardIDs, teamID)
 

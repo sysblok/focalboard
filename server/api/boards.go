@@ -14,6 +14,7 @@ import (
 
 func (a *API) registerBoardsRoutes(r *mux.Router) {
 	r.HandleFunc("/teams/{teamID}/boards", a.sessionRequired(a.handleGetBoards)).Methods("GET")
+	r.HandleFunc("/teams/{teamID}/boards/admin", a.sessionRequired(a.handleGetAllBoardsForTeamAdmin)).Methods("GET")
 	r.HandleFunc("/boards", a.sessionRequired(a.handleCreateBoard)).Methods("POST")
 	r.HandleFunc("/boards/{boardID}", a.attachSession(a.handleGetBoard, false)).Methods("GET")
 	r.HandleFunc("/boards/{boardID}", a.sessionRequired(a.handlePatchBoard)).Methods("PATCH")
@@ -69,8 +70,8 @@ func (a *API) handleGetBoards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// retrieve boards list
 	boards, err := a.app.GetBoardsForUserAndTeam(userID, teamID, !isGuest)
+
 	if err != nil {
 		a.errorResponse(w, r, err)
 		return
@@ -671,5 +672,79 @@ func (a *API) handleGetBoardMetadata(w http.ResponseWriter, r *http.Request) {
 	// response
 	jsonBytesResponse(w, http.StatusOK, data)
 
+	auditRec.Success()
+}
+
+func (a *API) handleGetAllBoardsForTeamAdmin(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation GET /teams/{teamID}/boards/admin getAllBoardsAdmin
+	//
+	// Returns all team boards for admin
+	//
+	// ---
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: teamID
+	//   in: path
+	//   description: Team ID
+	//   required: true
+	//   type: string
+	// security:
+	// - BearerAuth: []
+	// responses:
+	//   '200':
+	//     description: success
+	//     schema:
+	//       type: array
+	//       items:
+	//         "$ref": "#/definitions/Board"
+	//   '403':
+	//     description: access denied
+	//   default:
+	//     description: internal error
+	//     schema:
+	//       "$ref": "#/definitions/ErrorResponse"
+
+	teamID := mux.Vars(r)["teamID"]
+	userID := getUserID(r)
+
+	// Check if user is admin
+	isAdmin, err := a.isHardcodedAdmin(userID)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	if !isAdmin {
+		a.errorResponse(w, r, model.NewErrPermission("access denied - admin only"))
+		return
+	}
+
+	auditRec := a.makeAuditRecord(r, "getAllBoardsAdmin", audit.Fail)
+	defer a.audit.LogRecord(audit.LevelRead, auditRec)
+	auditRec.AddMeta("teamID", teamID)
+
+	// Get all boards for team
+	boards, err := a.app.GetAllBoardsForTeam(teamID)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	a.logger.Debug("GetAllBoardsAdmin",
+		mlog.String("teamID", teamID),
+		mlog.String("adminUserID", userID),
+		mlog.Int("boardsCount", len(boards)),
+	)
+
+	data, err := json.Marshal(boards)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	jsonBytesResponse(w, http.StatusOK, data)
+
+	auditRec.AddMeta("boardsCount", len(boards))
 	auditRec.Success()
 }

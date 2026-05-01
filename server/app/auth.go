@@ -194,7 +194,6 @@ func (a *App) RegisterUser(username, email, password string) error {
 	return nil
 }
 
-
 // RegisterOrFetchUser creates a new user if the provided data is valid.
 func (a *App) RegisterOrFetchUser(username, email, password string) (string, error) {
 	var user *model.User
@@ -252,6 +251,43 @@ func (a *App) UpdateUserPassword(username, password string) error {
 		return err
 	}
 
+	return nil
+}
+
+func (a *App) UpdateUserPasswordByID(userID, password string) error {
+
+	if userID == "" {
+		return errors.New("userID is required")
+	}
+
+	user, err := a.store.GetUserByID(userID)
+	if err != nil {
+		return errors.Wrap(err, "user not found")
+	}
+
+	if user == nil {
+		return errors.New("user not found")
+	}
+
+	if password == "" {
+		return errors.New("password cannot be empty")
+	}
+
+	a.logger.Info("Admin password change initiated",
+		mlog.String("targetUserID", userID),
+		mlog.String("username", user.Username))
+
+	err = a.store.UpdateUserPasswordByID(userID, auth.HashPassword(password))
+	if err != nil {
+		a.logger.Error("Failed to update user password",
+			mlog.String("userID", userID),
+			mlog.Err(err))
+		return errors.Wrap(err, "unable to update password")
+	}
+
+	a.logger.Info("Admin password change completed successfully",
+		mlog.String("targetUserID", userID),
+		mlog.String("username", user.Username))
 	return nil
 }
 

@@ -236,6 +236,9 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 						return nil, fmt.Errorf("invalid board Member in archive line %d: %w", lineNum, err2)
 					}
 					boardMembers = append(boardMembers, boardMember)
+				case "user":
+					// For now, just skip user blocks during import
+					continue
 				default:
 					return nil, model.NewErrUnsupportedArchiveLineType(lineNum, archiveLine.Type)
 				}

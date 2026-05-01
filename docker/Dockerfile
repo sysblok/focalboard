@@ -1,8 +1,14 @@
 ### Webapp build
 FROM node:16.3.0@sha256:ca6daf1543242acb0ca59ff425509eab7defb9452f6ae07c156893db06c7a9a4 as nodebuild
 
+
+ARG FOCALBOARD_ENVIRONMENT
+ARG FOCALBOARD_ADMINS
 WORKDIR /webapp
 ENV NODE_OPTIONS=--max_old_space_size=4096
+ENV FOCALBOARD_ENVIRONMENT=$FOCALBOARD_ENVIRONMENT
+ENV FOCALBOARD_ADMINS=$FOCALBOARD_ADMINS
+
 
 COPY webapp/package.json webapp/package-lock.json* ./
 
@@ -29,14 +35,19 @@ RUN cd server && go mod download
 # Copy all code
 COPY . /go/src/focalboard
 
-# Get target architecture 
+# Get target architecture
 ARG TARGETOS
-ARG TARGETARCH  
+ARG TARGETARCH
 
 RUN --mount=type=cache,target="/root/.cache/go-build" EXCLUDE_PLUGIN=true EXCLUDE_SERVER=true EXCLUDE_ENTERPRISE=true make server-docker os=${TARGETOS} arch=${TARGETARCH}
 
 ## Final image
 FROM debian:buster-slim@sha256:5b0b1a9a54651bbe9d4d3ee96bbda2b2a1da3d2fa198ddebbced46dfdca7f216
+
+ARG FOCALBOARD_ENVIRONMENT
+ARG FOCALBOARD_ADMINS
+ENV FOCALBOARD_ENVIRONMENT=${FOCALBOARD_ENVIRONMENT}
+ENV FOCALBOARD_ADMINS=${FOCALBOARD_ADMINS}
 
 RUN mkdir -p /opt/focalboard/data/files
 RUN chown -R nobody:nogroup /opt/focalboard

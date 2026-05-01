@@ -2,7 +2,6 @@ package config
 
 import (
 	"log"
-	"os"
 
 	"github.com/spf13/viper"
 )
@@ -26,7 +25,7 @@ type AmazonS3Config struct {
 	Timeout         int64
 }
 
-// Configuration is the app configuration stored in a json file.
+// Configuration is the app configuration stored in a json file and in env
 type Configuration struct {
 	ServerRoot               string            `json:"serverRoot" mapstructure:"serverRoot"`
 	Port                     int               `json:"port" mapstructure:"port"`
@@ -68,6 +67,8 @@ type Configuration struct {
 
 	NotifyFreqCardSeconds  int `json:"notify_freq_card_seconds" mapstructure:"notify_freq_card_seconds"`
 	NotifyFreqBoardSeconds int `json:"notify_freq_board_seconds" mapstructure:"notify_freq_board_seconds"`
+
+	Admins []string `mapstructure:"admins"`
 }
 
 // ReadConfigFile read the configuration from the filesystem.
@@ -108,6 +109,7 @@ func ReadConfigFile(configFilePath string) (*Configuration, error) {
 	viper.SetDefault("TeammateNameDisplay", "username")
 	viper.SetDefault("ShowEmailAddress", false)
 	viper.SetDefault("ShowFullName", false)
+	viper.SetDefault("Admins", []string{})
 
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
@@ -121,12 +123,7 @@ func ReadConfigFile(configFilePath string) (*Configuration, error) {
 		return nil, err
 	}
 
-	env := os.Getenv("FOCALBOARD_ENVIRONMENT")
-	if env != "" {
-		configuration.FeatureFlags["FOCALBOARD_ENVIRONMENT"] = env
-	}
-
-	log.Println("readConfigFile")
+	log.Println("readConfigFile (sensitive data removed)")
 	log.Printf("%+v", removeSecurityData(configuration))
 
 	return &configuration, nil
@@ -134,5 +131,6 @@ func ReadConfigFile(configFilePath string) (*Configuration, error) {
 
 func removeSecurityData(config Configuration) Configuration {
 	clean := config
+	clean.Admins = nil
 	return clean
 }

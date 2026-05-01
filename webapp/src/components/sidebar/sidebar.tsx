@@ -1,6 +1,6 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
-import React, {useCallback, useEffect, useState} from 'react'
+import React, {useCallback, useEffect, useMemo, useState} from 'react'
 import {FormattedMessage} from 'react-intl'
 import {DragDropContext, Droppable, DropResult} from 'react-beautiful-dnd'
 
@@ -36,7 +36,7 @@ import {getCurrentTeam, getCurrentTeamId} from '../../store/teams'
 
 import {Constants} from '../../constants'
 
-import {getMe} from '../../store/users'
+import {getMe, isAdmin} from '../../store/users'
 import {getCurrentViewId} from '../../store/views'
 
 import octoClient from '../../octoClient'
@@ -50,6 +50,9 @@ import {Board} from '../../blocks/board'
 import SidebarCategory from './sidebarCategory'
 import SidebarSettingsMenu from './sidebarSettingsMenu'
 import SidebarUserMenu from './sidebarUserMenu'
+import SidebarBoardItemReadOnly from './sidebarBoardItemReadOnly'
+import CompassIcon from '../../widgets/icons/compassIcon'
+
 
 type Props = {
     activeBoardId?: string
@@ -69,12 +72,43 @@ const Sidebar = (props: Props) => {
     const [isHidden, setHidden] = useState(false)
     const [userHidden, setUserHidden] = useState(false)
     const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions())
+    const [adminOnlyBoards, setAdminOnlyBoards] = useState<Board[]>([])
+
+    const isUserAdmin = useAppSelector<boolean>(isAdmin);
     const boards = useAppSelector(getMySortedBoards)
     const dispatch = useAppDispatch()
     const sidebarCategories = useAppSelector<CategoryBoards[]>(getSidebarCategories)
     const me = useAppSelector<IUser|null>(getMe)
     const activeViewID = useAppSelector(getCurrentViewId)
     const currentBoard = useAppSelector(getCurrentBoard)
+    const teamId = useAppSelector(getCurrentTeamId)
+    const team = useAppSelector(getCurrentTeam)
+
+        // Fetch admin-only boards separately
+        useEffect(() => {
+            const fetchAdminBoards = async () => {
+                if (!isUserAdmin || !team) {
+                    setAdminOnlyBoards([])
+                    return
+                }
+
+                try {
+                    // Fetch all boards for team (admin endpoint)
+                    const allBoards = await octoClient.getAllBoardsAdmin(team.id)
+
+                    // Filter out boards the admin is already a member of
+                    const myBoardIDs = new Set(boards.map(b => b.id))
+                    const otherBoards = allBoards.filter((board: Board) => !myBoardIDs.has(board.id))
+
+                    setAdminOnlyBoards(otherBoards)
+                } catch (err) {
+                    console.error('Failed to fetch admin boards:', err)
+                    setAdminOnlyBoards([])
+                }
+            }
+
+            fetchAdminBoards()
+        }, [isUserAdmin, team?.id, boards])
 
     useEffect(() => {
         const categoryOnChangeHandler = (_: WSClient, categories: Category[]) => {
@@ -93,9 +127,6 @@ const Sidebar = (props: Props) => {
             wsClient.removeOnChange(blockCategoryOnChangeHandler, 'blockCategories')
         }
     }, [])
-
-    const teamId = useAppSelector(getCurrentTeamId)
-    const team = useAppSelector(getCurrentTeam)
 
     useEffect(() => {
         if (team) {
@@ -418,11 +449,30 @@ const Sidebar = (props: Props) => {
                                     />
                                 ))
                             }
-                            {provided.placeholder}
                         </div>
                     )}
                 </Droppable>
             </DragDropContext>
+
+            {/* Uncategorized boards for admin - simple list with export only */}
+            {isUserAdmin && adminOnlyBoards.length > 0 && (
+                <div className='SidebarCategory'>
+                    <div
+                        className='octo-sidebar-item category expanded'
+                    >
+                        <div className='octo-sidebar-title category-title'>
+                            <CompassIcon icon='export-variant'/>
+                            {'Exportable (Admin)'}
+                        </div>
+                    </div>
+                    {adminOnlyBoards.map((board) => (
+                        <SidebarBoardItemReadOnly
+                            key={board.id}
+                            board={board}
+                        />
+                    ))}
+                </div>
+            )}
 
             <div className='octo-spacer'/>
 

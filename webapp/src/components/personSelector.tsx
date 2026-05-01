@@ -1,7 +1,7 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useCallback} from 'react'
+import React, {useCallback, useMemo} from 'react'
 import {useIntl} from 'react-intl'
 import Select from 'react-select/async'
 import {CSSObject} from '@emotion/serialize'
@@ -67,6 +67,26 @@ const selectStyles = {
         background: 'rgb(var(--center-channel-bg-rgb))',
         minWidth: '260px',
     }),
+    menuList: (provided: CSSObject): CSSObject => ({
+        ...provided,
+        minHeight: '320px',
+    }),
+}
+
+const applyStickyUserSorting = (users: IUser[], stickyUsernames: string[]): IUser[] => {
+    if (stickyUsernames.length === 0) {
+        return users.sort((a, b) => a.username.localeCompare(b.username))
+    }
+
+    const stickyUsers = stickyUsernames
+        .map(username => users.find(user => user.username === username))
+        .filter(Boolean) as IUser[]
+
+    const remainingUsers = users
+        .filter(user => !stickyUsernames.includes(user.username))
+        .sort((a, b) => a.username.localeCompare(b.username))
+
+    return [...stickyUsers, ...remainingUsers]
 }
 
 const PersonSelector = (props: Props): JSX.Element => {
@@ -75,10 +95,13 @@ const PersonSelector = (props: Props): JSX.Element => {
     const clientConfig = useAppSelector<ClientConfig>(getClientConfig)
     const intl = useIntl()
 
+    const stickedUsers: string[] = ['bulgak0v', 'g.-ekaterina', 'alexeyqu', 'daria_u', 'danya_s', 'kolpashchikova', 'olya_dushkina', 'michael_deev', 'diidary', 'riyatriana.rivera', 'kimihail', 'affendi', 'annaoskina2']
     const boardUsersById = useAppSelector<{[key: string]: IUser}>(getBoardUsers)
-    const boardUsers = useAppSelector<IUser[]>(getBoardUsersList)
+    const boardUsersRaw = useAppSelector<IUser[]>(getBoardUsersList)
     const boardUsersKey = Object.keys(boardUsersById) ? Utils.hashCode(JSON.stringify(Object.keys(boardUsersById))) : 0
     const me = useAppSelector<IUser|null>(getMe)
+
+    const boardUsers = useMemo(() => applyStickyUserSorting(boardUsersRaw, stickedUsers), [boardUsersRaw, stickedUsers])
 
     const formatOptionLabel = (user: any): JSX.Element => {
         if (!user) {
@@ -155,7 +178,8 @@ const PersonSelector = (props: Props): JSX.Element => {
                 usersInsideBoard.push(u)
             }
         }
-        return usersInsideBoard;
+
+        return applyStickyUserSorting(usersInsideBoard, stickedUsers)
     }, [boardUsers, allowAddUsers, boardUsersById, me])
 
     let primaryClass = 'Person'
@@ -189,12 +213,12 @@ const PersonSelector = (props: Props): JSX.Element => {
                 className={`${primaryClass}${secondaryClass}`}
                 classNamePrefix={'react-select'}
                 formatOptionLabel={formatOptionLabel}
-                styles={selectStyles}
                 placeholder={emptyDisplayValue}
                 getOptionLabel={(o: IUser) => o.username}
                 getOptionValue={(a: IUser) => a.id}
                 value={users}
                 onChange={onChange}
+                styles={selectStyles}
             />
         </>
     )

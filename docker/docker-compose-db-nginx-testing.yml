@@ -1,0 +1,63 @@
+version: "3"
+
+services:
+  app:
+    # Use pre-built image from GitHub Container Registry
+    # Set FOCALBOARD_TAG environment variable to use 'dev' (default) or 'main' tag
+    # To authenticate: echo $GITHUB_TOKEN | docker login ghcr.io -u YOUR_USERNAME --password-stdin
+    image: ghcr.io/sysblok/focalboard/focalboard:${FOCALBOARD_TAG:-dev}
+    # Uncomment below and comment 'image:' above to build locally instead
+    # build:
+    #   context: ../
+    #   dockerfile: docker/Dockerfile
+    container_name: focalboard-dev-app
+    depends_on:
+      - focalboard-db
+    expose:
+      - 8000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.focalboard-dev.rule=Host(`${FOCALBOARD_HOST}`)"
+      - "traefik.http.routers.focalboard-dev.entrypoints=web"
+      - "traefik.http.routers.focalboard-dev.middlewares=focalboard-dev-redirect"
+      - "traefik.http.routers.focalboard-dev-secure.rule=Host(`${FOCALBOARD_HOST}`)"
+      - "traefik.http.routers.focalboard-dev-secure.entrypoints=websecure"
+      - "traefik.http.routers.focalboard-dev-secure.tls.certresolver=le"
+      - "traefik.http.routers.focalboard-dev-secure.service=focalboard-dev"
+      - "traefik.http.middlewares.focalboard-dev-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.focalboard-dev-redirect.redirectscheme.permanent=true"
+      - "traefik.http.services.focalboard-dev.loadbalancer.server.port=8000"
+      - "traefik.http.services.focalboard-dev.loadbalancer.healthcheck.path=/api/v2/system/ping"
+      - "traefik.http.services.focalboard-dev.loadbalancer.healthcheck.interval=10s"
+    environment:
+      - FOCALBOARD_ENVIRONMENT=${FOCALBOARD_ENVIRONMENT:-dev}
+      - FOCALBOARD_ADMINS=${FOCALBOARD_ADMINS:-}
+    volumes:
+      - "./config.json:/opt/focalboard/config.json"
+      - fbdata:/opt/focalboard/data
+    restart: always
+    networks:
+      - proxy
+      - default
+
+  focalboard-db:
+    image: postgres:16
+    container_name: focalboard-dev-db
+    restart: always
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - type: bind
+        source: /backups/focalboard-dev
+        target: /backups
+    environment:
+      POSTGRES_DB: boards
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+volumes:
+  fbdata:
+  pgdata:
+
+networks:
+  proxy:
+    external: true
