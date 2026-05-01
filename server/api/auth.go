@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"github.com/mattermost/focalboard/server/model"
 	"github.com/mattermost/focalboard/server/services/audit"
 	"github.com/mattermost/focalboard/server/services/auth"
+	"github.com/mattermost/focalboard/server/services/oidc"
 	"github.com/mattermost/focalboard/server/utils"
 
 	"github.com/mattermost/mattermost-server/v6/shared/mlog"
@@ -757,6 +759,67 @@ func (a *API) adminRequired(handler func(w http.ResponseWriter, r *http.Request)
 
 		handler(w, r)
 	}
+}
+
+func (a *API) handleOIDCLogin(w http.ResponseWriter, r *http.Request) {
+	state, err := oidc.GenerateState()
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "oidc_state",
+		Value:    state,
+		Path:     "/",
+		MaxAge:   300,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	http.Redirect(w, r, a.oidcProvider.AuthCodeURL(state, a.oidcCallbackURL(r)), http.StatusFound)
+}
+
+func (a *API) handleOIDCCallback(w http.ResponseWriter, r *http.Request) {
+	stateCookie, err := r.Cookie("oidc_state")
+	if err != nil || stateCookie.Value == "" || stateCookie.Value != r.URL.Query().Get("state") {
+		http.Redirect(w, r, "/login?error=oidc_state", http.StatusFound)
+		return
+	}
+
+	// Clear state cookie
+	http.SetCookie(w, &http.Cookie{Name: "oidc_state", Value: "", Path: "/", MaxAge: -1})
+
+	claims, err := a.oidcProvider.Exchange(r.Context(), r.URL.Query().Get("code"), a.oidcCallbackURL(r))
+	if err != nil {
+		a.logger.Error("OIDC exchange failed", mlog.Err(err))
+		http.Redirect(w, r, "/login?error=oidc_exchange", http.StatusFound)
+		return
+	}
+
+	user, err := a.app.GetOrCreateOIDCUser(claims.Sub, claims.Email, claims.Name, claims.Username)
+	if err != nil {
+		a.logger.Error("OIDC user sync failed", mlog.Err(err))
+		http.Redirect(w, r, "/login?error=oidc_user", http.StatusFound)
+		return
+	}
+
+	token, err := a.app.LoginOIDC(user)
+	if err != nil {
+		a.logger.Error("OIDC session creation failed", mlog.Err(err))
+		http.Redirect(w, r, "/login?error=oidc_session", http.StatusFound)
+		return
+	}
+
+	http.Redirect(w, r, "/login?token="+token, http.StatusFound)
+}
+
+func (a *API) oidcCallbackURL(r *http.Request) string {
+	scheme := "http"
+	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
+		scheme = "https"
+	}
+	return fmt.Sprintf("%s://%s/api/v2/login/oidc/callback", scheme, r.Host)
 }
 
 func (a *API) isHardcodedAdmin(userID string) (bool, error) {

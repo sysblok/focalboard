@@ -25,6 +25,14 @@ type AmazonS3Config struct {
 	Timeout         int64
 }
 
+type OIDCConfig struct {
+	Enable       bool     `json:"enable" mapstructure:"enable"`
+	ProviderURL  string   `json:"providerUrl" mapstructure:"providerUrl"`
+	ClientID     string   `json:"clientId" mapstructure:"clientId"`
+	ClientSecret string   `json:"clientSecret" mapstructure:"clientSecret"`
+	Scopes       []string `json:"scopes" mapstructure:"scopes"`
+}
+
 // Configuration is the app configuration stored in a json file and in env
 type Configuration struct {
 	ServerRoot               string            `json:"serverRoot" mapstructure:"serverRoot"`
@@ -58,6 +66,8 @@ type Configuration struct {
 	ShowFullName             bool              `json:"show_full_name" mapstructure:"showFullName"`
 
 	AuthMode string `json:"authMode" mapstructure:"authMode"`
+
+	OIDC OIDCConfig `json:"oidc" mapstructure:"oidc"`
 
 	LoggingCfgFile string `json:"logging_cfg_file" mapstructure:"logging_cfg_file"`
 	LoggingCfgJSON string `json:"logging_cfg_json" mapstructure:"logging_cfg_json"`

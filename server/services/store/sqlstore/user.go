@@ -123,6 +123,10 @@ func (s *SQLStore) getUserByUsername(db sq.BaseRunner, username string) (*model.
 	return s.getUserByCondition(db, sq.Eq{"username": username})
 }
 
+func (s *SQLStore) getUserByAuthData(db sq.BaseRunner, authService, authData string) (*model.User, error) {
+	return s.getUserByCondition(db, sq.Eq{"auth_service": authService, "auth_data": authData})
+}
+
 func (s *SQLStore) createUser(db sq.BaseRunner, user *model.User) (*model.User, error) {
 	now := utils.GetMillis()
 	user.CreateAt = now

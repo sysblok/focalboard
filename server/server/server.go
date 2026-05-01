@@ -17,6 +17,7 @@ import (
 	"github.com/mattermost/focalboard/server/api"
 	"github.com/mattermost/focalboard/server/app"
 	"github.com/mattermost/focalboard/server/auth"
+	oidcsvc "github.com/mattermost/focalboard/server/services/oidc"
 	appModel "github.com/mattermost/focalboard/server/model"
 	"github.com/mattermost/focalboard/server/services/audit"
 	"github.com/mattermost/focalboard/server/services/config"
@@ -143,7 +144,17 @@ func New(params Params) (*Server, error) {
 	}
 	app := app.New(params.Cfg, wsAdapter, appServices)
 
-	focalboardAPI := api.NewAPI(app, params.SingleUserToken, params.Cfg.AuthMode, params.PermissionsService, params.Logger, auditService, params.IsPlugin)
+	var oidcProvider *oidcsvc.Provider
+	if params.Cfg.OIDC.Enable {
+		var oidcErr error
+		oidcProvider, oidcErr = oidcsvc.New(&params.Cfg.OIDC)
+		if oidcErr != nil {
+			return nil, fmt.Errorf("failed to initialize OIDC provider: %w", oidcErr)
+		}
+		params.Logger.Info("OIDC provider initialized", mlog.String("providerUrl", params.Cfg.OIDC.ProviderURL))
+	}
+
+	focalboardAPI := api.NewAPI(app, params.SingleUserToken, params.Cfg.AuthMode, params.PermissionsService, params.Logger, auditService, params.IsPlugin, oidcProvider)
 
 	// Local router for admin APIs
 	localRouter := mux.NewRouter()

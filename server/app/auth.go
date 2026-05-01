@@ -1,6 +1,9 @@
 package app
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/mattermost/focalboard/server/model"
 	"github.com/mattermost/focalboard/server/services/auth"
 	"github.com/mattermost/focalboard/server/utils"
@@ -343,6 +346,80 @@ func (a *App) ChangeEmail(userID, oldPassword, newEmail string) error {
 	}
 
 	return nil
+}
+
+// GetOrCreateOIDCUser finds or creates a focalboard user for an OIDC login.
+// Lookup order: sub claim → email → auto-create.
+func (a *App) GetOrCreateOIDCUser(sub, email, name, preferredUsername string) (*model.User, error) {
+	// 1. Exact match by OIDC subject
+	user, err := a.store.GetUserByAuthData("oidc", sub)
+	if err == nil {
+		return user, nil
+	}
+	if !model.IsErrNotFound(err) {
+		return nil, errors.Wrap(err, "oidc: auth data lookup failed")
+	}
+
+	// 2. Existing user with matching email (link OIDC to it)
+	if email != "" {
+		user, err = a.store.GetUserByEmail(email)
+		if err == nil {
+			return user, nil
+		}
+		if !model.IsErrNotFound(err) {
+			return nil, errors.Wrap(err, "oidc: email lookup failed")
+		}
+	}
+
+	// 3. Auto-provision a new user
+	username := preferredUsername
+	if username == "" {
+		username = strings.Split(email, "@")[0]
+	}
+	if username == "" {
+		username = fmt.Sprintf("oidc_%s", sub[:8])
+	}
+
+	// Ensure uniqueness
+	base := username
+	for i := 1; ; i++ {
+		_, lookupErr := a.store.GetUserByUsername(username)
+		if model.IsErrNotFound(lookupErr) {
+			break
+		}
+		if lookupErr != nil {
+			return nil, errors.Wrap(lookupErr, "oidc: username uniqueness check failed")
+		}
+		username = fmt.Sprintf("%s_%d", base, i)
+	}
+
+	newUser, err := a.store.CreateUser(&model.User{
+		ID:          utils.NewID(utils.IDTypeUser),
+		Username:    username,
+		Email:       email,
+		AuthService: "oidc",
+		AuthData:    sub,
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "oidc: user creation failed")
+	}
+	return newUser, nil
+}
+
+// LoginOIDC creates a new session for an already-resolved OIDC user.
+func (a *App) LoginOIDC(user *model.User) (string, error) {
+	session := model.Session{
+		ID:          utils.NewID(utils.IDTypeSession),
+		Token:       utils.NewID(utils.IDTypeToken),
+		UserID:      user.ID,
+		AuthService: "oidc",
+		Props:       map[string]interface{}{},
+	}
+	if err := a.store.CreateSession(&session); err != nil {
+		return "", errors.Wrap(err, "oidc: session creation failed")
+	}
+	a.metrics.IncrementLoginCount(1)
+	return session.Token, nil
 }
 
 func (a *App) ChangeUsername(userID, oldPassword, newUsername string) error {

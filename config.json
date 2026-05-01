@@ -17,7 +17,14 @@
 	"localOnly": false,
 	"enableLocalMode": true,
 	"localModeSocketLocation": "/var/tmp/focalboard_local.socket",
-	"authMode": "native",
+	"authMode": "oidc",
+	"oidc": {
+		"enable": true,
+		"providerUrl": "https://keycloak.example.com/realms/myrealm",
+		"clientId": "focalboard",
+		"clientSecret": "your-client-secret",
+		"scopes": ["openid", "profile", "email"]
+	},
 	"logging_cfg_file": "",
 	"audit_cfg_file": "",
 	"enablePublicSharedBoards": false

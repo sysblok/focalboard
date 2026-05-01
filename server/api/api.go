@@ -11,6 +11,7 @@ import (
 	"github.com/mattermost/focalboard/server/app"
 	"github.com/mattermost/focalboard/server/model"
 	"github.com/mattermost/focalboard/server/services/audit"
+	"github.com/mattermost/focalboard/server/services/oidc"
 	"github.com/mattermost/focalboard/server/services/permissions"
 
 	"github.com/mattermost/mattermost-server/v6/shared/mlog"
@@ -42,6 +43,7 @@ type API struct {
 	logger          mlog.LoggerIFace
 	audit           *audit.Audit
 	isPlugin        bool
+	oidcProvider    *oidc.Provider
 }
 
 func NewAPI(
@@ -52,6 +54,7 @@ func NewAPI(
 	logger mlog.LoggerIFace,
 	audit *audit.Audit,
 	isPlugin bool,
+	oidcProvider *oidc.Provider,
 ) *API {
 	return &API{
 		app:             app,
@@ -61,6 +64,7 @@ func NewAPI(
 		logger:          logger,
 		audit:           audit,
 		isPlugin:        isPlugin,
+		oidcProvider:    oidcProvider,
 	}
 }
 
@@ -104,6 +108,12 @@ func (a *API) RegisterRoutes(r *mux.Router) {
 
 	// System routes are outside the /api/v2 path
 	a.registerSystemRoutes(r)
+
+	// OIDC routes bypass CSRF middleware (browser redirects, no XHR header)
+	if a.oidcProvider != nil {
+		r.HandleFunc("/api/v2/login/oidc", a.handleOIDCLogin).Methods("GET")
+		r.HandleFunc("/api/v2/login/oidc/callback", a.handleOIDCCallback).Methods("GET")
+	}
 }
 
 func (a *API) RegisterAdminRoutes(r *mux.Router) {

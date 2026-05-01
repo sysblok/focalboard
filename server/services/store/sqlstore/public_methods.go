@@ -578,6 +578,11 @@ func (s *SQLStore) GetUserByUsername(username string) (*model.User, error) {
 
 }
 
+func (s *SQLStore) GetUserByAuthData(authService, authData string) (*model.User, error) {
+	return s.getUserByAuthData(s.db, authService, authData)
+
+}
+
 func (s *SQLStore) GetUserCategories(userID string, teamID string) ([]model.Category, error) {
 	return s.getUserCategories(s.db, userID, teamID)
 

@@ -1,104 +1,49 @@
-// Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
-// See LICENSE.txt for license information.
-import React, {useState} from 'react'
+import React, {useEffect} from 'react'
 import {Redirect, useHistory, useLocation} from 'react-router-dom'
 
-import Form from '../components/form/form'
-import Layout from '../components/layout/layout'
 import {useAppDispatch, useAppSelector} from '../store/hooks'
 import {fetchMe, getLoggedIn} from '../store/users'
-import client from '../octoClient'
 
 const LoginPage = () => {
-    const [username, setUsername] = useState('')
-    const [password, setPassword] = useState('')
-    const [errorMessage, setErrorMessage] = useState<{messageId: string, defaultMessage: string} | null>(null)
-    const [isSubmitting, setIsSubmitting] = useState(false)
     const dispatch = useAppDispatch()
-    const loggedIn = useAppSelector<boolean|null>(getLoggedIn)
-    const queryParams = new URLSearchParams(useLocation().search)
+    const loggedIn = useAppSelector<boolean | null>(getLoggedIn)
+    const location = useLocation()
     const history = useHistory()
 
-    const handleLogin = async (): Promise<void> => {
-        setIsSubmitting(true)
-        setErrorMessage(null)
+    useEffect(() => {
+        const params = new URLSearchParams(location.search)
+        const token = params.get('token')
 
-        try {
-            const logged = await client.login(username, password)
-            if (logged) {
-                await dispatch(fetchMe())
-                const redirectTo = queryParams.get('r') || '/'
-                history.push(redirectTo)
-            } else {
-                setErrorMessage({
-                    messageId: 'login.log-in-error',
-                    defaultMessage: 'Login failed'
-                })
-            }
-        } catch (error) {
-            setErrorMessage({
-                messageId: 'login.log-in-error',
-                defaultMessage: 'Login failed'
+        if (token) {
+            localStorage.setItem('focalboardSessionId', token)
+            dispatch(fetchMe()).then(() => {
+                history.replace('/')
             })
-        } finally {
-            setIsSubmitting(false)
+            return
         }
-    }
 
-    const clearErrorOnChange = (value: string, setter: (value: string) => void) => {
-        setter(value)
-        if (errorMessage) {
-            setErrorMessage(null)
+        const error = params.get('error')
+        if (!error) {
+            window.location.href = '/api/v2/login/oidc'
         }
-    }
+    }, [dispatch, history, location.search])
 
     if (loggedIn) {
-        return <Redirect to={'/'}/>
+        return <Redirect to='/'/>
     }
 
-    const formFields = [
-        {
-            id: 'login-username',
-            placeholder: 'Enter username',
-            value: username,
-            onChange: (value: string) => clearErrorOnChange(value, setUsername)
-        },
-        {
-            id: 'login-password',
-            type: 'password',
-            placeholder: 'Enter password',
-            value: password,
-            onChange: (value: string) => clearErrorOnChange(value, setPassword)
-        }
-    ]
+    const error = new URLSearchParams(location.search).get('error')
+    if (error) {
+        return (
+            <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
+                <p style={{color: 'red'}}>{'Login failed. Please try again.'}</p>
+                <br/>
+                <a href='/api/v2/login/oidc'>{'Retry'}</a>
+            </div>
+        )
+    }
 
-    const formLinks = [
-        {
-            to: '/register',
-            messageId: 'login.register-button',
-            defaultMessage: 'or create an account if you don\'t have one'
-        },
-    ]
-
-    return (
-        <Layout>
-            <Form
-                title={{
-                    messageId: 'login.log-in-title',
-                    defaultMessage: 'Log in'
-                }}
-                fields={formFields}
-                submitButton={{
-                    messageId: 'login.log-in-button',
-                    defaultMessage: 'Log in'
-                }}
-                links={formLinks}
-                errorMessage={errorMessage}
-                onSubmit={handleLogin}
-                isSubmitting={isSubmitting}
-            />
-        </Layout>
-    )
+    return null
 }
 
 export default React.memo(LoginPage)
