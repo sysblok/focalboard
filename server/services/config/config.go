@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -90,7 +91,8 @@ func ReadConfigFile(configFilePath string) (*Configuration, error) {
 	}
 
 	viper.SetEnvPrefix("focalboard")
-	viper.AutomaticEnv() // read config values from env like FOCALBOARD_SERVERROOT=...
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_")) // FOCALBOARD_FILESS3CONFIG_BUCKET → filess3config.bucket
+	viper.AutomaticEnv()
 	viper.SetDefault("ServerRoot", DefaultServerRoot)
 	viper.SetDefault("Port", DefaultPort)
 	viper.SetDefault("DBType", "sqlite3")

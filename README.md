@@ -127,3 +127,100 @@ Before checking in commits, run `make ci`, which is similar to the `.gitlab-ci.y
 * **Changes**: See the [CHANGELOG](CHANGELOG.md) for the latest updates
 * **Bug Reports**: [File a bug report](https://github.com/mattermost/focalboard/issues/new?assignees=&labels=bug&template=bug_report.md&title=)
 * **Chat**: Join the [~Focalboard community channel](https://community.mattermost.com/core/channels/focalboard)
+
+---
+
+## Configuration
+
+All settings can be specified in `config.json` or via environment variables with the `FOCALBOARD_` prefix.
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `FOCALBOARD_SERVERROOT` | Public server root URL | `http://localhost:8000` |
+| `FOCALBOARD_PORT` | Server listening port | `8000` |
+| `FOCALBOARD_DBTYPE` | Database type: `sqlite3`, `postgres`, `mysql`, `libsql` | `sqlite3` |
+| `FOCALBOARD_DBCONFIG` | Database connection string | `./focalboard.db` |
+| `FOCALBOARD_DBPINGATTEMPTS` | DB connection retry attempts | `5` |
+| `FOCALBOARD_DBTABLEPREFIX` | Database table name prefix | `""` |
+| `FOCALBOARD_USESSL` | Enable HTTPS | `false` |
+| `FOCALBOARD_SECURECOOKIE` | Set Secure flag on session cookies | `false` |
+| `FOCALBOARD_WEBPATH` | Path to static web assets | `./pack` |
+| `FOCALBOARD_FILESDRIVER` | File storage backend: `local`, `amazons3` | `local` |
+| `FOCALBOARD_FILESPATH` | Local file storage path | `./files` |
+| `FOCALBOARD_MAXFILESIZE` | Max upload size in bytes (0 = unlimited) | `0` |
+| `FOCALBOARD_TELEMETRY` | Send anonymous usage telemetry | `true` |
+| `FOCALBOARD_PROMETHEUSADDRESS` | Prometheus metrics address | `""` |
+| `FOCALBOARD_SECRET` | Secret key for session signing | `""` |
+| `FOCALBOARD_SESSION_EXPIRE_TIME` | Session lifetime in seconds | `2592000` (30 days) |
+| `FOCALBOARD_SESSION_REFRESH_TIME` | Session refresh interval in seconds | `18000` (5 hours) |
+| `FOCALBOARD_LOCALONLY` | Restrict to loopback interface only | `false` |
+| `FOCALBOARD_ENABLELOCALMODE` | Enable Unix socket for local admin | `false` |
+| `FOCALBOARD_LOCALMODESOCKETLOCATION` | Unix socket path | `/var/tmp/focalboard_local.socket` |
+| `FOCALBOARD_ENABLEPUBLICSHAREDBOARDS` | Allow public board share links | `false` |
+| `FOCALBOARD_AUTHMODE` | Authentication mode: `native`, `oidc` | `native` |
+| `FOCALBOARD_ENABLE_DATA_RETENTION` | Enable automatic data deletion | `false` |
+| `FOCALBOARD_DATA_RETENTION_DAYS` | Days to retain data | `365` |
+| `FOCALBOARD_NOTIFY_FREQ_CARD_SECONDS` | Notification delay after card edit (seconds) | `120` |
+| `FOCALBOARD_NOTIFY_FREQ_BOARD_SECONDS` | Notification delay after board edit (seconds) | `86400` |
+
+### File Storage (S3 / Cloudflare R2)
+
+Set `FOCALBOARD_FILESDRIVER=amazons3`, then configure the following:
+
+| Variable | Description |
+|----------|-------------|
+| `FOCALBOARD_FILESS3CONFIG_ACCESSKEYID` | Access key ID |
+| `FOCALBOARD_FILESS3CONFIG_SECRETACCESSKEY` | Secret access key |
+| `FOCALBOARD_FILESS3CONFIG_BUCKET` | Bucket name |
+| `FOCALBOARD_FILESS3CONFIG_PATHPREFIX` | Optional path prefix within the bucket |
+| `FOCALBOARD_FILESS3CONFIG_REGION` | Region (`auto` for Cloudflare R2) |
+| `FOCALBOARD_FILESS3CONFIG_ENDPOINT` | Custom endpoint (e.g. `<account-id>.r2.cloudflarestorage.com`) |
+| `FOCALBOARD_FILESS3CONFIG_SSL` | Use HTTPS (`true` required for R2) |
+| `FOCALBOARD_FILESS3CONFIG_SIGNV2` | Use AWS Signature V2 (set `false` for R2) |
+| `FOCALBOARD_FILESS3CONFIG_SSE` | Server-side encryption (not supported by R2, use `false`) |
+| `FOCALBOARD_FILESS3CONFIG_TRACE` | Enable request trace logging |
+| `FOCALBOARD_FILESS3CONFIG_TIMEOUT` | Request timeout in milliseconds |
+
+**Cloudflare R2 example:**
+```bash
+FOCALBOARD_FILESDRIVER=amazons3
+FOCALBOARD_FILESS3CONFIG_ENDPOINT=<ACCOUNT_ID>.r2.cloudflarestorage.com
+FOCALBOARD_FILESS3CONFIG_REGION=auto
+FOCALBOARD_FILESS3CONFIG_SSL=true
+FOCALBOARD_FILESS3CONFIG_SIGNV2=false
+FOCALBOARD_FILESS3CONFIG_SSE=false
+FOCALBOARD_FILESS3CONFIG_ACCESSKEYID=<R2_ACCESS_KEY_ID>
+FOCALBOARD_FILESS3CONFIG_SECRETACCESSKEY=<R2_SECRET_ACCESS_KEY>
+FOCALBOARD_FILESS3CONFIG_BUCKET=<BUCKET_NAME>
+```
+
+### OIDC Authentication
+
+Set `FOCALBOARD_AUTHMODE=oidc`, then configure the following:
+
+| Variable | Description |
+|----------|-------------|
+| `FOCALBOARD_OIDC_ENABLE` | Enable OIDC (`true`) |
+| `FOCALBOARD_OIDC_PROVIDERURL` | OIDC provider discovery URL |
+| `FOCALBOARD_OIDC_CLIENTID` | Client ID |
+| `FOCALBOARD_OIDC_CLIENTSECRET` | Client secret |
+| `FOCALBOARD_OIDC_SCOPES` | Scopes (comma-separated: `openid,profile,email`) |
+
+### PostgreSQL TLS
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `FOCALBOARD_DB_SSLMODE` | PostgreSQL `sslmode` | `disable` |
+| `FOCALBOARD_DB_SSLROOTCERT` | Path to CA certificate | |
+| `FOCALBOARD_DB_SSLCERT` | Path to client certificate | |
+| `FOCALBOARD_DB_SSLKEY` | Path to client key | |
+
+### MySQL TLS
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `FOCALBOARD_DB_TLS` | MySQL TLS mode (`preferred`, `required`, `skip-verify`) | `disable` |
+
+> These SSL/TLS variables are merged into `FOCALBOARD_DBCONFIG` automatically at startup.
