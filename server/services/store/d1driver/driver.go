@@ -3,10 +3,11 @@
 //
 // DSN format: d1://<accountID>/<databaseID>?token=<apiToken>
 //
-// Transactions are implemented using D1's batch endpoint: all DML
-// statements within a transaction are buffered and sent atomically on
-// Commit. SELECT statements execute immediately (no read-your-own-writes
-// within an open transaction).
+// Cloudflare D1's REST API exposes only a /query endpoint (single statement).
+// There is no REST-accessible /batch endpoint; that is available only through
+// Workers bindings. As a result this driver executes every statement —
+// including those inside a database/sql transaction — individually via /query.
+// Commit and Rollback are no-ops; there is no server-side atomicity guarantee.
 package d1driver
 
 import (
@@ -20,7 +21,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
 	"sync/atomic"
 )
 
@@ -73,10 +73,6 @@ type queryRequest struct {
 	Params []interface{} `json:"params"`
 }
 
-type batchRequest struct {
-	Statements []queryRequest `json:"statements"`
-}
-
 type queryMeta struct {
 	Changes     int64   `json:"changes"`
 	LastRowID   int64   `json:"last_row_id"`
@@ -96,10 +92,22 @@ type apiError struct {
 	Message string `json:"message"`
 }
 
+// UnmarshalJSON handles both the standard {"code":N,"message":"..."} object
+// form and the plain-string form that D1 sometimes returns in its errors array.
+func (e *apiError) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err == nil {
+		e.Message = s
+		return nil
+	}
+	type alias apiError
+	return json.Unmarshal(data, (*alias)(e))
+}
+
 type apiResponse struct {
-	Result   []queryResult `json:"result"`
-	Success  bool          `json:"success"`
-	Errors   []apiError    `json:"errors"`
+	Result  []queryResult `json:"result"`
+	Success bool          `json:"success"`
+	Errors  []apiError    `json:"errors"`
 }
 
 // orderedRow preserves JSON object key order, which maps to column order.
@@ -159,9 +167,6 @@ func (d *d1Driver) Open(dsn string) (driver.Conn, error) {
 type d1Conn struct {
 	cfg    *d1Config
 	client *http.Client
-
-	mu sync.Mutex
-	tx *d1Tx // non-nil when inside a transaction
 }
 
 // Ping implements driver.Pinger.
@@ -179,32 +184,17 @@ func (c *d1Conn) Prepare(query string) (driver.Stmt, error) {
 func (c *d1Conn) Close() error { return nil }
 
 // Begin implements driver.Conn.
+// D1's REST API has no server-side transaction support; Begin returns a
+// pseudo-transaction where Commit and Rollback are both no-ops.
 func (c *d1Conn) Begin() (driver.Tx, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.tx != nil {
-		return nil, fmt.Errorf("d1: nested transactions are not supported")
-	}
-	tx := &d1Tx{conn: c}
-	c.tx = tx
-	return tx, nil
+	return &d1Tx{conn: c}, nil
 }
 
 // ExecContext implements driver.ExecerContext.
+// Every statement is sent to D1's /query endpoint immediately, regardless of
+// whether a transaction is open.
 func (c *d1Conn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
 	params := namedValuesToSlice(args)
-
-	c.mu.Lock()
-	tx := c.tx
-	c.mu.Unlock()
-
-	if tx != nil {
-		tx.mu.Lock()
-		tx.stmts = append(tx.stmts, queryRequest{SQL: query, Params: params})
-		tx.mu.Unlock()
-		return &d1Result{}, nil
-	}
-
 	result, err := c.doQuery(ctx, query, params)
 	if err != nil {
 		return nil, err
@@ -213,7 +203,6 @@ func (c *d1Conn) ExecContext(ctx context.Context, query string, args []driver.Na
 }
 
 // QueryContext implements driver.QueryerContext.
-// SELECTs always execute immediately (even inside a transaction).
 func (c *d1Conn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
 	params := namedValuesToSlice(args)
 	result, err := c.doQuery(ctx, query, params)
@@ -254,7 +243,7 @@ func (c *d1Conn) doQuery(ctx context.Context, sqlStr string, params []interface{
 
 	var apiResp apiResponse
 	if err := json.Unmarshal(respBytes, &apiResp); err != nil {
-		return nil, fmt.Errorf("d1: failed to parse response: %w", err)
+		return nil, fmt.Errorf("d1: failed to parse response (HTTP %d): %w", resp.StatusCode, err)
 	}
 	if !apiResp.Success || len(apiResp.Errors) > 0 {
 		if len(apiResp.Errors) > 0 {
@@ -268,83 +257,24 @@ func (c *d1Conn) doQuery(ctx context.Context, sqlStr string, params []interface{
 	return &apiResp.Result[0], nil
 }
 
-// doBatch sends multiple statements atomically via the D1 /batch endpoint.
-func (c *d1Conn) doBatch(ctx context.Context, stmts []queryRequest) error {
-	if len(stmts) == 0 {
-		return nil
-	}
-	body, err := json.Marshal(batchRequest{Statements: stmts})
-	if err != nil {
-		return err
-	}
-
-	apiURL := fmt.Sprintf(
-		"https://api.cloudflare.com/client/v4/accounts/%s/d1/database/%s/batch",
-		c.cfg.AccountID, c.cfg.DatabaseID,
-	)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, apiURL, bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Authorization", "Bearer "+c.cfg.APIToken)
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return fmt.Errorf("d1: batch HTTP request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	var apiResp apiResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
-		return fmt.Errorf("d1: failed to parse batch response: %w", err)
-	}
-	if !apiResp.Success || len(apiResp.Errors) > 0 {
-		if len(apiResp.Errors) > 0 {
-			return fmt.Errorf("d1: batch API error %d: %s", apiResp.Errors[0].Code, apiResp.Errors[0].Message)
-		}
-		return fmt.Errorf("d1: batch API request failed (HTTP %d)", resp.StatusCode)
-	}
-	return nil
-}
-
 // ---------------------------------------------------------------------------
 // Tx
 // ---------------------------------------------------------------------------
 
-// d1Tx buffers DML statements and sends them atomically via the /batch
-// endpoint on Commit. SELECTs are still executed immediately through the
-// connection and are not transactionally isolated.
+// d1Tx is a pseudo-transaction. D1's REST API has no transaction semantics;
+// all statements already executed via ExecContext cannot be rolled back.
 type d1Tx struct {
-	conn  *d1Conn
-	mu    sync.Mutex
-	stmts []queryRequest
-	done  atomic.Bool
+	conn *d1Conn
+	done atomic.Bool
 }
 
 func (t *d1Tx) Commit() error {
-	if !t.done.CompareAndSwap(false, true) {
-		return fmt.Errorf("d1: transaction already completed")
-	}
-	t.conn.mu.Lock()
-	t.conn.tx = nil
-	t.conn.mu.Unlock()
-
-	t.mu.Lock()
-	stmts := t.stmts
-	t.mu.Unlock()
-
-	return t.conn.doBatch(context.Background(), stmts)
+	t.done.Store(true)
+	return nil
 }
 
 func (t *d1Tx) Rollback() error {
-	if !t.done.CompareAndSwap(false, true) {
-		return nil // already committed or rolled back
-	}
-	t.conn.mu.Lock()
-	t.conn.tx = nil
-	t.conn.mu.Unlock()
-	// Buffered statements are discarded — effectively a no-op rollback.
+	t.done.Store(true)
 	return nil
 }
 
@@ -426,7 +356,14 @@ func (r *d1Result) RowsAffected() (int64, error) { return r.changes, nil }
 func namedValuesToSlice(args []driver.NamedValue) []interface{} {
 	s := make([]interface{}, len(args))
 	for i, a := range args {
-		s[i] = a.Value
+		// D1's API params are JSON-marshaled. Go encodes []byte as base64 in
+		// JSON, but D1 expects TEXT columns as plain strings. Convert here so
+		// binary blobs stored as text round-trip correctly.
+		if b, ok := a.Value.([]byte); ok {
+			s[i] = string(b)
+		} else {
+			s[i] = a.Value
+		}
 	}
 	return s
 }

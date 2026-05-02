@@ -129,9 +129,12 @@ func (s *SQLStore) DBType() string {
 
 func (s *SQLStore) getQueryBuilder(db sq.BaseRunner) sq.StatementBuilderType {
 	builder := sq.StatementBuilder
-	if s.dbType == model.PostgresDBType || s.dbType == model.SqliteDBType || s.dbType == model.TursoDBType {
+	if s.dbType == model.PostgresDBType || s.dbType == model.SqliteDBType {
 		builder = builder.PlaceholderFormat(sq.Dollar)
 	}
+	// TursoDBType uses the default sq.Question format (?), because the
+	// libsql HTTP driver treats $N as named parameters, not positional —
+	// positional args would never be bound, causing NOT NULL failures.
 
 	return builder.RunWith(db)
 }

@@ -226,6 +226,15 @@ func NewStore(config *config.Configuration, isSingleUser bool, logger mlog.Logge
 		return nil, err
 	}
 
+	// libsql (Turso) uses HTTP/2 streams per connection. The server closes
+	// idle streams, so we disable the idle pool to prevent stale-connection
+	// errors when the migration engine requests a connection after the initial
+	// Ping/schema check sequence.
+	if config.DBType == appModel.TursoDBType {
+		sqlDB.SetMaxIdleConns(0)
+		sqlDB.SetConnMaxIdleTime(time.Millisecond)
+	}
+
 	err = sqlDB.Ping()
 	if err != nil {
 		logger.Error(`Database Ping failed`, mlog.Err(err))

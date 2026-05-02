@@ -12,7 +12,8 @@ ifeq ($(BUILD_NUMBER),)
 	BUILD_DATE := n/a
 endif
 
-BUILD_TAGS += json1 sqlite3
+# Default: unified pure-Go build (all 5 backends). Override with BUILD_TAGS="json1 sqlite3" for CGO SQLite.
+BUILD_TAGS ?=
 
 LDFLAGS += -X "github.com/mattermost/focalboard/server/model.BuildNumber=$(BUILD_NUMBER)"
 LDFLAGS += -X "github.com/mattermost/focalboard/server/model.BuildDate=$(BUILD_DATE)"

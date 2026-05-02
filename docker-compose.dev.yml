@@ -1,0 +1,146 @@
+# Local development stack for testing Turso (libsql), D1, and OIDC (Keycloak).
+#
+# Profiles:
+#   turso       — focalboard built with sqlite3/libsql tags, backed by local sqld
+#   turso-cloud — focalboard built with sqlite3/libsql tags, connects to Turso cloud
+#   d1          — focalboard unified build (all 5 backends), uses Cloudflare D1 (cloud only)
+#   oidc        — adds Keycloak; combine with any db profile
+#
+# Examples:
+#   Local sqld:        docker compose -f docker-compose.dev.yml --profile turso up -d
+#   Turso cloud:       docker compose -f docker-compose.dev.yml --profile turso-cloud up -d
+#   Turso cloud+OIDC:  docker compose -f docker-compose.dev.yml --profile turso-cloud --profile oidc up -d
+#   D1 + OIDC:         docker compose -f docker-compose.dev.yml --profile d1 --profile oidc up -d
+#
+# Turso cloud credentials (set in .env or shell):
+#   TURSO_URL=libsql://fb-navystack.aws-ap-northeast-1.turso.io
+#   TURSO_TOKEN=<authToken>   ← short-lived (1 day), regenerate via: turso db tokens create fb-navystack
+#
+# First-time Keycloak setup (after `--profile oidc up`):
+#   1. Open http://localhost:8180 → admin / admin
+#   2. Create realm "focalboard"
+#   3. Create client "focalboard-client"
+#        Client authentication: ON
+#        Valid redirect URIs:  http://localhost:8000/api/v2/login/oidc/callback
+#        Web origins:          http://localhost:8000
+#   4. Credentials tab → copy client secret → set OIDC_CLIENT_SECRET below (or in .env)
+
+services:
+
+  # ── Turso / libsql ────────────────────────────────────────────────────────
+  sqld:
+    profiles: [turso]
+    image: ghcr.io/tursodatabase/libsql-server:latest
+    environment:
+      SQLD_HTTP_LISTEN_ADDR: 0.0.0.0:8080
+    ports:
+      - "8081:8080"
+    volumes:
+      - sqld_data:/var/lib/sqld
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  focalboard-turso:
+    profiles: [turso]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        BUILD_TAGS: "json1 sqlite3"
+    ports:
+      - "8000:8000"
+    environment:
+      FOCALBOARD_DBTYPE: libsql
+      FOCALBOARD_DBCONFIG: ws://sqld:8080
+      FOCALBOARD_SERVERROOT: http://localhost:8000
+      # Uncomment to enable OIDC (also start --profile oidc)
+      # FOCALBOARD_AUTHMODE: oidc
+      # FOCALBOARD_OIDC_ENABLE: "true"
+      # FOCALBOARD_OIDC_PROVIDERURL: http://keycloak:8080/realms/focalboard
+      # FOCALBOARD_OIDC_CLIENTID: focalboard-client
+      # FOCALBOARD_OIDC_CLIENTSECRET: ${OIDC_CLIENT_SECRET}
+      # FOCALBOARD_OIDC_SCOPES: openid,profile,email
+    volumes:
+      - turso_files:/opt/focalboard/data
+    depends_on:
+      sqld:
+        condition: service_healthy
+
+  # ── Turso cloud ───────────────────────────────────────────────────────────
+  focalboard-turso-cloud:
+    profiles: [turso-cloud]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        BUILD_TAGS: "json1 sqlite3"
+    ports:
+      - "8000:8000"
+    environment:
+      FOCALBOARD_DBTYPE: libsql
+      FOCALBOARD_DBCONFIG: ${TURSO_URL}?authToken=${TURSO_TOKEN}
+      FOCALBOARD_SERVERROOT: http://localhost:8000
+      # Uncomment to enable OIDC (also start --profile oidc)
+      # FOCALBOARD_AUTHMODE: oidc
+      # FOCALBOARD_OIDC_ENABLE: "true"
+      # FOCALBOARD_OIDC_PROVIDERURL: http://keycloak:8080/realms/focalboard
+      # FOCALBOARD_OIDC_CLIENTID: focalboard-client
+      # FOCALBOARD_OIDC_CLIENTSECRET: ${OIDC_CLIENT_SECRET}
+      # FOCALBOARD_OIDC_SCOPES: openid,profile,email
+    volumes:
+      - turso_cloud_files:/opt/focalboard/data
+
+  # ── Cloudflare D1 ─────────────────────────────────────────────────────────
+  # D1 has no local emulator. Set CF_ACCOUNT_ID, CF_DATABASE_ID, CF_API_TOKEN
+  # in a .env file or as shell environment variables before starting.
+  focalboard-d1:
+    profiles: [d1]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        BUILD_TAGS: ""
+    ports:
+      - "8000:8000"
+    environment:
+      FOCALBOARD_DBTYPE: d1
+      FOCALBOARD_DBCONFIG: d1://${CF_ACCOUNT_ID}/${CF_DATABASE_ID}?token=${CF_API_TOKEN}
+      FOCALBOARD_SERVERROOT: http://localhost:8000
+      # Uncomment to enable OIDC (also start --profile oidc)
+      # FOCALBOARD_AUTHMODE: oidc
+      # FOCALBOARD_OIDC_ENABLE: "true"
+      # FOCALBOARD_OIDC_PROVIDERURL: http://keycloak:8080/realms/focalboard
+      # FOCALBOARD_OIDC_CLIENTID: focalboard-client
+      # FOCALBOARD_OIDC_CLIENTSECRET: ${OIDC_CLIENT_SECRET}
+      # FOCALBOARD_OIDC_SCOPES: openid,profile,email
+    volumes:
+      - d1_files:/opt/focalboard/data
+
+  # ── OIDC (Keycloak) ───────────────────────────────────────────────────────
+  keycloak:
+    profiles: [oidc]
+    image: quay.io/keycloak/keycloak:25.0
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8180:8080"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK'"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  sqld_data:
+  turso_files:
+  turso_cloud_files:
+  d1_files:
+  keycloak_data:

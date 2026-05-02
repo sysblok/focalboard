@@ -147,7 +147,7 @@ func (s *SQLStore) GetSchemaName() (string, error) {
 		query = s.getQueryBuilder(s.db).Select("DATABASE()")
 	case model.PostgresDBType:
 		query = s.getQueryBuilder(s.db).Select("current_schema()")
-	case model.SqliteDBType:
+	case model.SqliteDBType, model.TursoDBType, model.D1DBType:
 		return "", nil
 	default:
 		return "", ErrUnsupportedDatabaseType

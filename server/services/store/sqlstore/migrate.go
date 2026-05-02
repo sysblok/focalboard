@@ -21,7 +21,6 @@ import (
 	drivers "github.com/mattermost/morph/drivers"
 	mysql "github.com/mattermost/morph/drivers/mysql"
 	postgres "github.com/mattermost/morph/drivers/postgres"
-	sqlite "github.com/mattermost/morph/drivers/sqlite"
 	embedded "github.com/mattermost/morph/sources/embedded"
 
 	_ "github.com/lib/pq" // postgres driver
@@ -100,18 +99,13 @@ func (s *SQLStore) Migrate() error {
 		}
 	}()
 
-	var driver drivers.Driver
-	var err error
-
-	if s.dbType == model.SqliteDBType || s.dbType == model.TursoDBType || s.dbType == model.D1DBType {
-		driver, err = sqlite.WithInstance(s.db)
-		if err != nil {
-			return err
-		}
+	driver, err := s.newMorphDriver()
+	if err != nil {
+		return err
 	}
 
 	var db *sql.DB
-	if s.dbType != model.SqliteDBType && s.dbType != model.TursoDBType {
+	if s.dbType != model.SqliteDBType && s.dbType != model.TursoDBType && s.dbType != model.D1DBType {
 		s.logger.Debug("Getting migrations connection")
 		db, err = s.getMigrationConnection()
 		if err != nil {

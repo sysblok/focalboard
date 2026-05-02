@@ -79,6 +79,21 @@ func (s *SQLStore) RunUniqueIDsMigration() error {
 		return nil
 	}
 
+	// Migration 18 renames workspace_id → channel_id and drops the original column.
+	// If it has already been applied (e.g. a previous run applied all schema migrations
+	// but crashed before this data migration completed), workspace_id no longer exists
+	// and the dedup query would fail. In that case mark as done and skip.
+	wsColExists, wsErr := s.doesColumnExist("blocks", "workspace_id")
+	if wsErr != nil {
+		return fmt.Errorf("cannot check workspace_id column existence: %w", wsErr)
+	}
+	if !wsColExists {
+		if sErr := s.setSystemSetting(s.db, UniqueIDsMigrationKey, strconv.FormatBool(true)); sErr != nil {
+			return fmt.Errorf("cannot mark unique IDs migration as completed: %w", sErr)
+		}
+		return nil
+	}
+
 	s.logger.Debug("Running Unique IDs migration")
 
 	tx, txErr := s.db.BeginTx(context.Background(), nil)

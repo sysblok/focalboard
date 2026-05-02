@@ -1,6 +1,5 @@
 ### Webapp build
-FROM node:16.3.0@sha256:ca6daf1543242acb0ca59ff425509eab7defb9452f6ae07c156893db06c7a9a4 as nodebuild
-
+FROM node:20-slim AS nodebuild
 
 ARG FOCALBOARD_ENVIRONMENT
 ARG FOCALBOARD_ADMINS
@@ -9,45 +8,47 @@ ENV NODE_OPTIONS=--max_old_space_size=4096
 ENV FOCALBOARD_ENVIRONMENT=$FOCALBOARD_ENVIRONMENT
 ENV FOCALBOARD_ADMINS=$FOCALBOARD_ADMINS
 
-
 COPY webapp/package.json webapp/package-lock.json* ./
 
-RUN npm ci && npm cache clean --force
+RUN npm ci --ignore-scripts && npm cache clean --force
 
 COPY webapp/ /webapp
 
 RUN npm run pack
 
 ### Go build
-FROM golang:1.18.3@sha256:b203dc573d81da7b3176264bfa447bd7c10c9347689be40540381838d75eebef AS gobuild
+FROM golang:1.22-bookworm AS gobuild
 
 WORKDIR /go/src/focalboard
 
-# Create all necessary dirs
 RUN mkdir server && mkdir -p bin/docker
 
-# Copy files for deps installing
 COPY server/go.mod server/go.sum ./server
 
-# Install deps
 RUN cd server && go mod download
 
-# Copy all code
 COPY . /go/src/focalboard
 
-# Get target architecture
 ARG TARGETOS
 ARG TARGETARCH
+# BUILD_TAGS controls the SQLite driver:
+#   ""              — all 5 backends (postgres, mysql, sqlite3, libsql/Turso, D1) via pure Go (default)
+#   "json1 sqlite3" — same, but SQLite uses mattn/go-sqlite3 (CGO required)
+ARG BUILD_TAGS=""
 
-RUN --mount=type=cache,target="/root/.cache/go-build" EXCLUDE_PLUGIN=true EXCLUDE_SERVER=true EXCLUDE_ENTERPRISE=true make server-docker os=${TARGETOS} arch=${TARGETARCH}
+RUN --mount=type=cache,target="/root/.cache/go-build" \
+    EXCLUDE_PLUGIN=true EXCLUDE_SERVER=true EXCLUDE_ENTERPRISE=true \
+    make server-docker BUILD_TAGS="${BUILD_TAGS}" os=${TARGETOS} arch=${TARGETARCH}
 
 ## Final image
-FROM debian:buster-slim@sha256:5b0b1a9a54651bbe9d4d3ee96bbda2b2a1da3d2fa198ddebbced46dfdca7f216
+FROM debian:bookworm-slim
 
 ARG FOCALBOARD_ENVIRONMENT
 ARG FOCALBOARD_ADMINS
 ENV FOCALBOARD_ENVIRONMENT=${FOCALBOARD_ENVIRONMENT}
 ENV FOCALBOARD_ADMINS=${FOCALBOARD_ADMINS}
+
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /opt/focalboard/data/files
 RUN chown -R nobody:nogroup /opt/focalboard
@@ -60,8 +61,6 @@ COPY --from=gobuild --chown=nobody:nogroup /go/src/focalboard/LICENSE.txt LICENS
 COPY --from=gobuild --chown=nobody:nogroup /go/src/focalboard/docker/server_config.json config.json
 
 USER nobody
-
-EXPOSE 8000/tcp
 
 EXPOSE 8000/tcp 9092/tcp
 

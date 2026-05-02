@@ -22,7 +22,10 @@ func (s *SQLStore) getSystemSetting(db sq.BaseRunner, key string) (string, error
 }
 
 func (s *SQLStore) getSystemSettings(db sq.BaseRunner) (map[string]string, error) {
-	query := s.getQueryBuilder(db).Select("*").From(s.tablePrefix + "system_settings")
+	query := s.getQueryBuilder(db).
+		Select("id", "value").
+		From(s.tablePrefix+"system_settings").
+		Where(sq.NotEq{"id": nil})
 
 	rows, err := query.Query()
 	if err != nil {
