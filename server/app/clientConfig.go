@@ -12,5 +12,6 @@ func (a *App) GetClientConfig() *model.ClientConfig {
 		TeammateNameDisplay:      a.config.TeammateNameDisplay,
 		FeatureFlags:             a.config.FeatureFlags,
 		MaxFileSize:              a.config.MaxFileSize,
+		AuthMode:                 a.config.AuthMode,
 	}
 }
